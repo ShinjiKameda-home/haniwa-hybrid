@@ -2,7 +2,7 @@
 
 ## Motivation: Bridging the Past and Future – A New Approach to Japanese Irrigation
 
-<b>"Which is the world's largest tomb?"</b>
+**"Which is the world's largest tomb?"**
 
 Many would point to the Great Pyramid of Giza. I have immense respect for the pyramids and hope to visit them one day, but in terms of surface area, there is another contender in Japan: the Daisenryo Kofun, in Sakai City, Osaka Prefecture. While it is widely believed to be the final resting place of Emperor Nintoku, it remains one of history's greatest mysteries.
 
@@ -35,39 +35,61 @@ I’m transforming this ancient guardian into a hybrid of "Terracotta Irrigation
 
  - Active Scarecrow: Based on my previous project where I repurposed security cameras for bird watching, it will be usable to trigger glowing LED on Haniwa's eyes and a buzzer to keep crows or cats away.
 
+![Packaged haniwa](images/20260316_packed_haniwa.png "I took the Haniwa out of its packaging. Unglazed clay is very fragile, but there were no noticeable cracks.")
+![Standing haniwa](images/20260316_standing_haniwa.png "Haniwa could stand in my room.")
+![Hole of haniwa](images/20260316_hole78p45_haniwa.png "A hole in the bottom of the Haniwa. Measuring it with calipers reveals its diameter to be 78.45mm.")
+
 In Japan’s limited space, there is a distinct beauty in multipurpose design. Let’s breathe new life into an ancient form.
 
+## Step: Integrating Weather Intelligence — The Brain of Haniwa
+"Have you ever watered your garden, only to have it pour rain an hour later?" We've all been there. It’s a frustrating waste of resources and effort. To prevent this, I think it not enough even "Terracotta Irrigation" is adopted. my Haniwa needed more than just a soil moisture sensor; it needed the power of foresight.
 
+I decided to integrate weather forecast data to create a "Smart Irrigation Advisor." But before the Haniwa could worry about water, it faced a more immediate challenge: The Hayama Wind. I discovered that when wind speeds exceed 9m/s, my "BirdWatcher" AI goes into a frenzy, mistaking swaying branches for birds. To save my system from this "storm of false positives," I suddenly needed to struggle developing a coordination system between my weather service and the AI monitor.
 
-## Step: Integrating Weather Intelligence
-To give my Haniwa the power of foresight, I integrated the OpenWeatherMap API. Here is how I set up the "Brain" of the project:
+1. Invoking "Dr. Wadachi"
+I named the weather service "DrWadachi", in honor of Kiyoo Wadachi, a pioneer in Japanese meteorology. (https://en.wikipedia.org/wiki/Kiyoo_Wadachi)
 
-https://openweathermap.org/
+I read a book in my university days. Dr. Wadachi once said he pursued this field because "great discoveries could be made with nothing but observation data and human intellect." I feel a deep sympathy for this. In my university days, I used cutting-edge equipment costing a few 100 million yen (more than 1 million dollars). Today, I am pursuing the same essence of discovery using a used PC and a $5 Raspberry Pi Pico W.
 
-1. Obtaining the API Passport
- - Register: Create a free account ( <1000 requests available ) at OpenWeather.org.
+Setup Process:
+API Passport: I used the OpenWeatherMap API (5-Day / 3-Hour Forecast, https://openweathermap.org/). One smart request a day provides enough data to anticipate Hayama's weather while remaining resource-efficient.
+
+**Obtaining the API Passport**
+ - Register: Create a free account ( 1000 requests/day available ) at OpenWeather.org.
  - Activation: After verifying your email, navigate to the "My API Keys" tab.
  - Generate: A default key is usually provided, but you can create a dedicated one named Haniwa_Project.
 
-Note: It can take up to a few hours for a new key to become active globally.
+2. The Logic: A Symbiosis of Mind and Action
+The intelligence of this project is distributed across three distinct roles, creating a feedback loop between the cloud AI, the edge AI, and the physical interface.
 
-Note: Optimized Data Retrieval
-To minimize network traffic and power consumption, I designed the "DrWadachi" service to fetch a single comprehensive forecast once a day. Since the OpenWeatherMap "5 Day / 3 Hour Forecast" provides detailed predictions for the next 120 hours, one smart request is all my Haniwa needs to anticipate the weather in Miura. It’s a perfect balance between staying informed and being resource-efficient.
+A. Dr. Wadachi (The Astronomer / Cloud AI)
+The Python service acts as the central analyst. It doesn't just fetch data; it interprets the environment:
 
-Note: Accessing the Credentials
-After the email verification, navigate to the "My API keys" section under your profile menu. Here, you will find your unique 32-character alphanumeric key. Think of this as the digital tuning frequency for your "DrWadachi" weather station.
+Predictive Irrigation: It correlates real-time soil moisture data (sent from the Haniwa) with the 48-hour precipitation forecast.
 
-2. Secure Configuration (Environment Variables)
-To keep my observation site private and my keys secure, I used a .env file. This is crucial for preventing sensitive information from being pushed to a public GitHub repository.
+Safety Oversight: It monitors wind speeds to decide if it's safe for the "BirdWatcher" to operate.
 
-3. Developing the "DrWadachi" Service (Python)
-I wrote a Python script named weather_forecast.py on my Home Server. This script acts as the "DrWadachi" intelligence:
+Directive Issuance: It writes a centralized JSON "Status Report" that dictates the behavior of the other components.
 
-It uses the requests library to fetch JSON data from OpenWeatherMap using the hidden GPS coordinates.
+B. The BirdWatcher (The Lamplighter / Edge AI)
+This component handles the high-intensity vision processing. It identifies visitors—not just birds, but also cats, dogs, and humans.
 
-It parses the 3-hour forecast to determine the irrigation needs.
+The "Lamplighter" Rest Logic: Too busy lamplighters need proper rests. When Dr. Wadachi reports winds >9m/s, the BirdWatcher enters a "Sheep-Counting" sleep. It checks the JSON status every 10 seconds, staying alert enough to wake up the moment the wind dies down, without wasting CPU cycles during the storm.
 
-It sends a formal report to my smartphone via the Telegram Bot API.
+C. The Haniwa (The Fox / Human Interface)
+The Haniwa is the bridge to the physical world. It stays quiet to save energy but becomes interactive when needed:
+
+Human Presence Awareness & Security: When the BirdWatcher detects a "Person" nearby, it immediately notifies the Haniwa. This serves a dual purpose: it prepares the Haniwa for interaction and acts as a visual security deterrent.
+
+**The Visual Signal:** Only when a person is present, the Haniwa's eyes glow.
+
+ - For the Owner: It signals the irrigation status (e.g., glowing to suggest watering if no rain is forecast).
+
+ - For an Intruder: The sudden illumination of the Haniwa’s eyes in a dark garden sends a clear message: "You are being monitored." It transforms an ancient clay figure into a silent, modern-day guardian of my home in Hayama.
+
+## First Report Success!
+The system is alive. The inaugural report indicated a wind speed of 9.32 m/s in Hayama—right at the threshold! Dr. Wadachi successfully signaled the BirdWatcher to take a nap. The project has officially moved from "code on a screen" to a "living, breathing monitor" that respects the natural environment of the Miura Peninsula.
+
 
 
 ## Disclaimer
