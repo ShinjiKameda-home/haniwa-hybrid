@@ -17,7 +17,7 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 STATUS_FILE = "../permission.json"
 TEMP_FILE = "../permission_temp.json"
 CHECK_INTERVAL = 3 * 60 * 60 # 3 hours
-LOG_FILE = "weather_observation_log.csv"
+LOG_FILE = "../weather_observation_log.csv"
 
 # Local constants
 last_execution_time = 0
