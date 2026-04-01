@@ -53,14 +53,22 @@ def get_weather():
     # Extract current weather parameters
     current = data['list'][0]
     wind_speed = current['wind'].get('speed', 0)
+    wind_gust = current['wind'].get('gust', wind_speed)
     weather_main = current['weather'][0]['main']
     temp = current['main']['temp']
     humidity = current['main']['humidity']
     now = datetime.datetime.now()
 
+    # Extract next weather parameters (after 3 hours)
+    upcoming = data['list'][1]
+    next_wind_speed = upcoming['wind'].get('speed', 0)
+    next_wind_gust = upcoming['wind'].get('gust', next_wind_speed)
+
     # Logic for System Permissions
-    # 1. BirdWatching: Allowed if wind speed <= 8.0 m/s
-    bird_perm = wind_speed <= 8.0
+    # 1. BirdWatching: Allowed if wind speed <= 5.5 m/s and gust <= 10.0 m/s for 3-6 hours
+    curr_safe = (wind_speed <= 5.5) and (wind_gust <= 10.0)
+    next_safe = (next_wind_speed <=5.5) and (next_wind_gust <= 10.0)
+    bird_perm = curr_safe and next_safe
     # 2. Watering: Check rain slots in the next 48 hours (16 slots of 3-hour intervals)
     rain_slots = sum(1 for slot in data['list'][:16] if 'Rain' in [w['main'] for w in slot['weather']])
     water_perm = rain_slots < 3
@@ -69,6 +77,7 @@ def get_weather():
     save_to_log([
         now.strftime('%Y-%m-%d %H:%M:%S'),
         wind_speed,
+        wind_gust,
         weather_main,
         temp,
         humidity,
@@ -78,6 +87,7 @@ def get_weather():
     # --- ACTION 2: Update permission.json for system-to-system integration ---
     status = {
         "wind_speed": wind_speed,
+        "wind_gust": wind_gust,
         "rain_slots_48h": rain_slots,
         "birdwatching": bird_perm,
         "watering": water_perm,
@@ -90,14 +100,14 @@ def get_weather():
 
     # --- ACTION 3: Human Report via Telegram (Only at 6:30 AM JST) ---
     if now.hour == 6:
-        advice = "SKIP Watering" if not water_perm else "Proceed Watering"
-        wind_alert = f"\n WARNING: Strong wind ({wind_speed}m/s)" if not bird_perm else ""
+        advice = "SKIP Watering" if not water_perm else "GO Watering"
+        wind_alert = f"\n WARNING: Strong Wind or Gust! " if not bird_perm else ""
 
         message = (
             f"--- Dr. Wadachi Morning Report ---\n"
             f"Status: {weather_main}\n"
             f"Temp: {temp}C / Humid: {humidity}%\n"
-            f"Wind: {wind_speed}m/s{wind_alert}\n"
+            f"Wind: {wind_speed}m/s / Gust: {wind_gust}m/s {wind_alert}\n"
             f"Watering: {advice}"
         )
         send_telegram(message)
