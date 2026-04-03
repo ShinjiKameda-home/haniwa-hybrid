@@ -65,13 +65,13 @@ def get_weather():
     next_wind_gust = upcoming['wind'].get('gust', next_wind_speed)
 
     # Logic for System Permissions
-    # 1. BirdWatching: Allowed if wind speed <= 5.5 m/s and gust <= 10.0 m/s for 3-6 hours
-    curr_safe = (wind_speed <= 5.5) and (wind_gust <= 10.0)
-    next_safe = (next_wind_speed <=5.5) and (next_wind_gust <= 10.0)
+    # 1. BirdWatching: Allowed if wind speed <= 8.0m/s and gust <= 10.0m/s for 3-6 hours
+    curr_safe = (wind_speed <= 8.0) and (wind_gust <= 10.0)
+    next_safe = (next_wind_speed <= 8.0) and (next_wind_gust <= 10.0)
     bird_perm = curr_safe and next_safe
     # 2. Watering: Check rain slots in the next 48 hours (16 slots of 3-hour intervals)
     rain_slots = sum(1 for slot in data['list'][:16] if 'Rain' in [w['main'] for w in slot['weather']])
-    water_perm = rain_slots < 3
+    water_perm = rain_slots <= 3
 
     # --- ACTION 1: Log data to CSV for accuracy verification ---
     save_to_log([
