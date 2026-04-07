@@ -19,14 +19,19 @@ TEMP_FILE = "../permission_temp.json"
 CHECK_INTERVAL = 3 * 60 * 60 # 3 hours
 LOG_FILE = "../weather_observation_log.csv"
 
-# Local constants
-last_execution_time = 0
-
 def send_telegram(text):
     """Send a notification message via Telegram Bot API."""
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": text}
-    requests.post(url, json=payload)
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        # Print results into the terminal
+        if response.status_code == 200:
+            print("Telegram notification sent successfully!")
+        else:
+            print(f"Failed to send: {response.text}")
+    except Exception as e:
+        print(f"Notification Error: {e}")
 
 def save_to_log(data_row):
     """Append observation data to a local CSV file for future accuracy analysis."""
@@ -37,7 +42,7 @@ def save_to_log(data_row):
             writer.writerow(["timestamp", "wind_speed", "weather", "temp", "humidity", "rain_slots_48h"])
         writer.writerow(data_row)
 
-def get_weather():
+def get_weather(force_report=False):
     """Fetch weather data, update system permissions, and notify user if it's morning."""
     url = f"https://api.openweathermap.org/data/2.5/forecast?q={CITY}&appid={API_KEY}&units=metric"
     try:
@@ -65,13 +70,16 @@ def get_weather():
     next_wind_gust = upcoming['wind'].get('gust', next_wind_speed)
 
     # Logic for System Permissions
-    # 1. BirdWatching: Allowed if wind speed <= 8.0m/s and gust <= 10.0m/s for 3-6 hours
-    curr_safe = (wind_speed <= 8.0) and (wind_gust <= 10.0)
-    next_safe = (next_wind_speed <= 8.0) and (next_wind_gust <= 10.0)
+    # 1. BirdWatching: Allowed if wind is calmed down for 3-6 hours
+    curr_safe = (wind_speed <= 7.0) and (wind_gust <= 9.0)
+    next_safe = (next_wind_speed <= 9.0) and (next_wind_gust <= 12.0)
     bird_perm = curr_safe and next_safe
     # 2. Watering: Check rain slots in the next 48 hours (16 slots of 3-hour intervals)
+    #              If it's raining now, just SKIP watering.
     rain_slots = sum(1 for slot in data['list'][:16] if 'Rain' in [w['main'] for w in slot['weather']])
-    water_perm = rain_slots <= 3
+    if weather_main == 'Rain':
+        rain_slots += 3
+    water_perm = rain_slots <= 2
 
     # --- ACTION 1: Log data to CSV for accuracy verification ---
     save_to_log([
@@ -93,18 +101,18 @@ def get_weather():
         "watering": water_perm,
         "updated_at": now.strftime('%Y-%m-%d %H:%M:%S')
     }
-    # Atomic write to avoid race conditions with other services
+    # Atomic write to avoid file disruption and race conditions with other services
     with open(TEMP_FILE, 'w') as f:
         json.dump(status, f, indent=4)
     os.replace(TEMP_FILE, STATUS_FILE)
 
-    # --- ACTION 3: Human Report via Telegram (Only at 6:30 AM JST) ---
-    if now.hour == 6:
+    # --- ACTION 3: Human Report via Telegram (Only at 6:30 AM JST, or just restarted) ---
+    if now.hour == 6 or force_report:
         advice = "SKIP Watering" if not water_perm else "GO Watering"
-        wind_alert = f"\n WARNING: Strong Wind or Gust! " if not bird_perm else ""
+        wind_alert = f"\nWARNING: Strong Wind or Gust!" if not bird_perm else ""
 
         message = (
-            f"--- Dr. Wadachi Morning Report ---\n"
+            f"--- Weather Report ---\n"
             f"Status: {weather_main}\n"
             f"Temp: {temp}C / Humid: {humidity}%\n"
             f"Wind: {wind_speed}m/s / Gust: {wind_gust}m/s {wind_alert}\n"
@@ -116,15 +124,21 @@ def get_weather():
         print(f"[{now.strftime('%H:%M')}] System updated & Logged (Silent mode).")
 
 def main_loop():
-    global last_execution_time
+    # Initial system check: Send startup notification
+    send_telegram("Mission Start: Monitoring the Weather...")
+    # Force reporting for the first time getting weather data
+    get_weather(force_report=True) 
+
     while True:
         now = datetime.datetime.now()
+        # Acquire weather data every 3 hours
         if now.minute == 30 and now.hour % 3 == 0:
-            current_ts = time.time()
-            if (current_ts - last_execution_time) > 3600:
-                get_weather()
-                last_execution_time = current_ts
-        time.sleep(60)
+            get_weather()
+            # Sleep to prevent redundant execution within the same minute
+            for _ in range(7):
+                time.sleep(10)
+        # Just check the clock every 10 seconds
+        time.sleep(10)
 
 if __name__ == "__main__":
     main_loop()
