@@ -61,35 +61,14 @@ The dimensions were tantalizingly close. But in hardware hacking, "close" only c
 **Precision Bonding**
 To unite the 1500-year-old design with the $1 modern pot, I used a silicone sealant. After some try-and-error, the haniwa could have stopped wetting himself. 
 
-I applied the resin to the rim of the 100-yen pot and carefully inserted it into the Haniwa's base. It was a friction fit that transitioned into a permanent, watertight seal. The result was a seamless, unified structure. The Haniwa now had a solid, watertight "bucket" built into its lower half.
+I applied the resin to the rim of the 50-yen pot and carefully inserted it into the Haniwa's base. It was a friction fit that transitioned into a permanent, watertight seal. The result was a seamless, unified structure. The Haniwa now had a solid, watertight "bucket" built into its lower half. It looked just like a pre-historic "flame-style pottery" vessel. (https://www.japan.travel/japan-heritage/popular/flame-style-pottery-snow-niigata-shinano-jomon-jade)
 
-![The wedge of haniwa](images/ "Zero-leakage integrity achieved: Successfully mitigated unintended fluid discharge via silicone reinforcement.")
-
-
-
-
-
-
-## Leak Test & Garden Debut – The Guardian Takes Its Post
-Before committing my electronics (the Raspberry Pi Pico W and sensors) to the clay vessel, I had to verify the seal.
-
-The moment of truth: I filled the Haniwa's new internal reservoir to the brim with water.
-
-I waited. One hour. Three hours. A full day.
-
-The results were perfect. The silicone seal held firm. There was no catastrophic leakage from the base. Instead, I saw exactly what I hoped for: a very slow, even sweating of moisture through the Haniwa's porous clay body. The "Terracotta Irrigation" principle was verified. The ancient low-tech solution was alive and well, waiting for its high-tech brain.
-
-Garden Debut: Post-Storm Victory
-With the successful leak test, the Haniwa was ready for its true purpose. Coincidentally, the fierce Hayama winds that Dr. Wadachi had predicted finally subsided, leaving the air clear and the garden peaceful. It was the perfect moment.
-
-I carried the completed, unified Haniwa out to my small potager. I cleared a space among the herbs and seedlings, creating a place of honor for the new guardian.
-
-The Haniwa now stands at its post, its terracotta form blending seamlessly with the earth, yet harboring a cutting-edge IoT brain. It is no longer just a museum replica or a tomb offering; it is a living, functional hybrid of ancient wisdom and modern innovation, ready to protect and nurture my garden.
+![Attached pot as a wedge leg of Haniwa](images/20260328_attached_pot_as_a_wedge.jpg "Zero-leakage integrity achieved.")
 
 ## Integrating Weather Intelligence — The Brain of Haniwa
 "Have you ever watered your garden, only to have it pour rain an hour later?" We've all been there. It’s a frustrating waste of resources and effort. To prevent this, I thought it not enough even "Terracotta Irrigation" is adopted. My Haniwa needed more than just a soil moisture sensor; it needed the power of foresight.I decided to integrate weather forecast data to create a "Smart Irrigation Advisor."
 
-![image]("The schematic diagram of a system with the characters from 'The Little Prince'")
+![SystemArchitecture](images/System_Architecture_260407.jpg "The schematic diagram of a system")
 
 ** Invoking "Dr. Wadachi" **
 The brain of the Haniwa, this weather service was named "Dr. Wadachi" in honor of Kiyoo Wadachi, a pioneer in Japanese meteorology and the first Director-General of the Japan Meteorological Agency. (https://en.wikipedia.org/wiki/Kiyoo_Wadachi)
@@ -130,8 +109,13 @@ The system is alive. The inaugural report indicated a wind speed of 9.32 m/s in 
 Therefore, the project has officially moved from "code on a screen" to a "living, breathing monitor" that respects the natural environment of the Miura Peninsula.
 
 
+As a mechanical engineer, the concept of sneak paths was a revelation. Adding resistors wasn't just about current limiting; it was about defining the flow of digital intent, much like check valves in a hydraulic system.
 
 
+
+///the next step will be written here///
+!["schematic around Raspberry Pi Pico 2 W"]
+///the next step will be written here///
 
 
 
@@ -141,8 +125,6 @@ I wish to complete this project with a single, guiding philosophy:
 Technology is a treasure to those who seek its meaning, yet a shadow of fear to those who do not.
 
 The concept is simple: By cross-referencing local soil moisture with sky weather forecasts, the Cloud-AI determines the necessity of watering. The moment a "person" is detected by its Edge-AI eye, the Haniwa statue’s gaze ignites.
-
-![image: schematic]
 
 Within this single movement, I have infused two distinct functions (souls):
  - For my family and me who understand the language of its blinking colors, it serves as a beacon of insight, guiding our hands to nurture the garden.
