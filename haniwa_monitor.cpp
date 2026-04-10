@@ -1,4 +1,5 @@
 #include "pico/stdlib.h"
+#include "hardware/gpio.h"
 
 // ハニワさんの視神経（GPIO番号）を定義
 const uint LED_RED   = 13;
@@ -27,7 +28,7 @@ int main() {
         gpio_set_dir(led, GPIO_OUT);
     }
 
-    while (true) {
+    while(true){
         // 赤を5秒間点滅
         blink_led(LED_RED, 5);
         
@@ -37,4 +38,5 @@ int main() {
         // 青を5秒間点滅
         blink_led(LED_BLUE, 5);
     }
+
 }
