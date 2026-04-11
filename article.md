@@ -108,8 +108,31 @@ However, before the Haniwa could worry about water, it faced a more immediate ch
 The system is alive. The inaugural report indicated a wind speed of 9.32 m/s in Hayama—right at the threshold! Since I discovered that when wind speeds exceed 9m/s, my "BirdWatcher" AI goes into a frenzy, mistaking swaying branches for birds, I ask Dr. Wadachi  to signaled the BirdWatcher to take a nap. 
 Therefore, the project has officially moved from "code on a screen" to a "living, breathing monitor" that respects the natural environment of the Miura Peninsula.
 
+## Beyond Simplicity Cult: Why I Chose Multiple Resistors for Respective Colors
+My background is not in electronics but in mechanics. In that realm, "simplicity" is often equivalent to "safety." Pruning away redundant components, reducing part counts, cutting costs, and achieving a direct, lean architecture is blindly believed as the pinnacle of engineering strength.
 
-As a mechanical engineer, the concept of sneak paths was a revelation. Adding resistors wasn't just about current limiting; it was about defining the flow of digital intent, much like check valves in a hydraulic system.
+A bridge with fewer joints, an engine with fewer moving parts—these are the goals.So, when I first looked at a popular circuit diagram for driving an RGB LED from a microcontroller (Raspberry Pi Pico 2), my mechanical instincts immediately triggered. Why use three or four separate resistors? Why not combine the outputs and share a single resistor to the common ground (cathode)? At first, it seemed like an obvious optimization. One resistor is simpler than three.
+
+But then, I looked closer at the physics of the LEDs. And that's when my worldview as a mechanical engineer began to shift. The problem was found in the intrinsic properties of light itself, or more specifically, the materials used to create different colored photons.
+
+First, I tried to use a common anode RGB LED, but I quickly abandoned that idea. In this configuration, you have one shared input (Anode) for Red, Green, and Blue, and three separate outputs (Cathodes) that go to the ground. I was completely confused: Since my Pico 2W has only common ground, I think it very difficult for beginner such as me to use such an element. I decided to use separately red, green, and blue LEDs.
+
+Let's go back to the main topic, I thought if I were to use a single, shared resistor on the common ground leg, it would, theoretically, limit the total current. But a single resistor cannot account for the individual appetites of each color. This was where the surprising fact lay: The forward voltage of a Red LED is significantly lower than that of Green or Blue. Red LED: 1.8V to 2.0V, but Green & Blue LEDs are used with 3.0V to 3.2V. 
+
+My microcontroller, the Pico 2, outputs a steady 3.3V from its GPIO pins. If I drive a Green or Blue LED, the difference is small (3.3V - 3.1V = 0.2V). A $220\Omega$ resistor limits the current nicely. However, if I drive the Red LED with that same $220\Omega$ resistor, the difference is massive (3.3V - 1.9V = 1.4V). The equation $I = V/R$ tells us that a much, much larger current will flow through the Red LED. The result? As you imagined, it might be destroyed.  Even though the microcontroller pin will be damaged in the worst case.
+
+**The Necessity of Redundancy:**
+To tame the Red LED, to bring its brightness into balance with the others, I needed a higher resistance. I calculated that adding a second $220\Omega$ resistor in series—creating a total resistance of $440\Omega$ for the Red channel only—would provide the perfect sentinel. This is the design I chose using multiple resistors:
+ - Red Channel: GP13(pin17) -> $220\Omega$ + $220\Omega$ -> Red Anode
+ - Green Channel: GP14(pin19) -> $220\Omega$ -> Green Anode
+ - Blue Channel: GP15(pin20) -> $220\Omega$ -> Blue Anode
+ - Common Ground: Shared Cathode -> GND(jump to pin18)
+
+![Schematic01](images/20260411_led_blinking.jpg "The schematic diagram to blinking Red/Green/Blue LEDs")
+
+Conclusion: A Shift in PerspectiveAs a mechanical engineer, seeing two resistors where one "could" have been feels... inefficient. It feels like adding weight to an airframe.But I am learning that in the world of electrons, redundancy is not waste; it is protection. By using two separate resistors, I am not just limiting current; I am ensuring the independence of each color system. I am preventing a failure in the Red channel (like a short) from cascading and affecting the Green or Blue channels, or worse, the microcontroller itself.Pruning the design down to a single, shared resistor would have been simpler structurally. But it would have been a fragile, unbalanced, and unsafe system electrically.
+
+My electrical beginner's design is now stable, safe, and beautifully balanced now. I am learning to appreciate this new kind of complexity—not as a failure of design, but as the essential architecture of safety and performance.In the end, engineering is not about adhering to a single philosophy. It's about understanding the unique physics of the domain you are working in.
 
 
 
