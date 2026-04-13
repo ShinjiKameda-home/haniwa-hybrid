@@ -134,6 +134,18 @@ Conclusion: A Shift in PerspectiveAs a mechanical engineer, seeing two resistors
 
 My electrical beginner's design is now stable, safe, and beautifully balanced now. I am learning to appreciate this new kind of complexity—not as a failure of design, but as the essential architecture of safety and performance.In the end, engineering is not about adhering to a single philosophy. It's about understanding the unique physics of the domain you are working in.
 
+## Adding Tactile Sensing: Selecting A Soil Moisture Sensor
+
+To give Haniwa the "sense of touch", I selected a kind of soil moisture sensor. Here're reasons why this choice aligns with a sustainable and global engineering mindset:
+
+1. Durability via Capacitive Sensing
+While simple resistive sensors can be made by inserting electrodes directly into terracotta, they often corrode within weeks due to electrolysis. This capacitive type features electrodes protected from direct contact with the soil. By measuring changes in capacitance rather than resistance, we ensure a much longer life-span, an essential quality for a guardian intended to stay in the garden.
+
+2. Low-Power Design (GPIO-Powered)
+Operating at approximately 5mA to 7mA (less than 10-12mA), this sensor's power draw is well within the limits of a single Raspberry Pi Pico 2 GPIO pin. This allows for a "Power-on-Demand" strategy: the sensor is energized only for a few dozen milliseconds during measurement, drastically reducing power consumption for battery-operated deployments.
+
+3. Cost-Effectiveness through Mass Production
+These sensors are incredibly affordable (often less than $2 USD when bought in bulk). This low price is a result of economies of scale rather than poor quality. By utilizing mature, 555-timer-based circuits, we leverage reliable, mass-produced technology. This makes the project accessible not just to hobbyists, but potentially to anyone seeking low-cost agricultural solutions.
 
 
 ///the next step will be written here///

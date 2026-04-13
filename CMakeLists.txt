@@ -19,7 +19,14 @@ add_executable(haniwa_monitor
 )
 
 # Library link to use blinking LED
-target_link_libraries(haniwa_monitor pico_stdlib)
+target_link_libraries(haniwa_monitor
+    pico_stdlib
+    hardware_adc
+)
+
+# Enable USB output, disable UART output
+pico_enable_stdio_usb(haniwa_monitor 1)
+pico_enable_stdio_uart(haniwa_monitor 0)
 
 # Activate generating .uf2 file
 pico_add_extra_outputs(haniwa_monitor)
