@@ -31,7 +31,7 @@ I brought home a Haniwa replica. It's more than a souvenir　for me — it seeme
 Vision: The Haniwa Guardian of the Potager
 I’m transforming this ancient guardian into a hybrid of "Terracotta Irrigation" and "Active Scarecrow" for my small garden.
 
- - Terracotta Irrigation: Utilizing the porous nature of clay for automatic, low-tech irrigation. Combined with a Raspberry Pi Pico W, it will monitor soil moisture and manage water levels in the body itself. It won't just water the plants; it’ll notify me via Telegram when it needs a refill.
+ - Terracotta Irrigation: Utilizing the porous nature of clay for automatic, low-tech irrigation. Combined with a Raspberry Pi Pico 2 W, it will monitor soil moisture and manage water levels in the body itself. It won't just water the plants; it’ll notify me via Telegram when it needs a refill.
 
  - Active Scarecrow: Based on my previous project where I repurposed security cameras for bird watching, it will be usable to trigger glowing LED on Haniwa's eyes and a buzzer to keep crows or cats away.
 
@@ -73,7 +73,7 @@ I applied the resin to the rim of the 50-yen pot and carefully inserted it into 
 ** Invoking "Dr. Wadachi" **
 The brain of the Haniwa, this weather service was named "Dr. Wadachi" in honor of Kiyoo Wadachi, a pioneer in Japanese meteorology and the first Director-General of the Japan Meteorological Agency. (https://en.wikipedia.org/wiki/Kiyoo_Wadachi)
 
-Since I remembered, I read a book in my university days. Dr. Wadachi once said he pursued this field because "great discoveries could be made with nothing but observation data and human intellect." I feel a deep sympathy for this. In my university days, I used cutting-edge equipment costing a few 100 million yen (more than 1 million dollars). Today, I am pursuing the same essence of discovery using a used $30 PC and a $5 Raspberry Pi Pico W.
+Since I remembered, I read a book in my university days. Dr. Wadachi once said he pursued this field because "great discoveries could be made with nothing but observation data and human intellect." I feel a deep sympathy for this. In my university days, I used cutting-edge equipment costing a few 100 million yen (more than 1 million dollars). Today, I am pursuing the same essence of discovery using a used $30 PC and a $5 Raspberry Pi Pico 2 W.
 
 Setup Process:
 API Passport: I used the OpenWeatherMap API (5-Day / 3-Hour Forecast, https://openweathermap.org/). One smart request a day provides enough data to anticipate Hayama's weather while remaining resource-efficient.
@@ -111,22 +111,22 @@ Therefore, the project has officially moved from "code on a screen" to a "living
 ## Beyond Simplicity Cult: Why I Chose Multiple Resistors for Respective Colors
 My background is not in electronics but in mechanics. In that realm, "simplicity" is often equivalent to "safety." Pruning away redundant components, reducing part counts, cutting costs, and achieving a direct, lean architecture is blindly believed as the pinnacle of engineering strength.
 
-A bridge with fewer joints, an engine with fewer moving parts—these are the goals.So, when I first looked at a popular circuit diagram for driving an RGB LED from a microcontroller (Raspberry Pi Pico 2), my mechanical instincts immediately triggered. Why use three or four separate resistors? Why not combine the outputs and share a single resistor to the common ground (cathode)? At first, it seemed like an obvious optimization. One resistor is simpler than three.
+A bridge with fewer joints, an engine with fewer moving parts—these are the goals.So, when I first looked at a popular circuit diagram for driving an RGB LED from a microcontroller (Raspberry Pi Pico 2 W), my mechanical instincts immediately triggered. Why use three or four separate resistors? Why not combine the outputs and share a single resistor to the common ground (cathode)? At first, it seemed like an obvious optimization. One resistor is simpler than three.
 
 But then, I looked closer at the physics of the LEDs. And that's when my worldview as a mechanical engineer began to shift. The problem was found in the intrinsic properties of light itself, or more specifically, the materials used to create different colored photons.
 
-First, I tried to use a common anode RGB LED, but I quickly abandoned that idea. In this configuration, you have one shared input (Anode) for Red, Green, and Blue, and three separate outputs (Cathodes) that go to the ground. I was completely confused: Since my Pico 2W has only common ground, I think it very difficult for beginner such as me to use such an element. I decided to use separately red, green, and blue LEDs.
+First, I tried to use a common anode RGB LED, but I quickly abandoned that idea. In this configuration, you have one shared input (Anode) for Red, Green, and Blue, and three separate outputs (Cathodes) that go to the ground. I was completely confused: Since my Pico 2 W has only common ground, I think it very difficult for beginner such as me to use such an element. I decided to use separately red, green, and blue LEDs.
 
 Let's go back to the main topic, I thought if I were to use a single, shared resistor on the common ground leg, it would, theoretically, limit the total current. But a single resistor cannot account for the individual appetites of each color. This was where the surprising fact lay: The forward voltage of a Red LED is significantly lower than that of Green or Blue. Red LED: 1.8V to 2.0V, but Green & Blue LEDs are used with 3.0V to 3.2V. 
 
-My microcontroller, the Pico 2, outputs a steady 3.3V from its GPIO pins. If I drive a Green or Blue LED, the difference is small (3.3V - 3.1V = 0.2V). A $220\Omega$ resistor limits the current nicely. However, if I drive the Red LED with that same $220\Omega$ resistor, the difference is massive (3.3V - 1.9V = 1.4V). The equation $I = V/R$ tells us that a much, much larger current will flow through the Red LED. The result? As you imagined, it might be destroyed.  Even though the microcontroller pin will be damaged in the worst case.
+My microcontroller, the Pico 2 W, outputs a steady 3.3V from its GPIO pins. If I drive a Green or Blue LED, the difference is small (3.3V - 3.1V = 0.2V). A $220\Omega$ resistor limits the current nicely. However, if I drive the Red LED with that same $220\Omega$ resistor, the difference is massive (3.3V - 1.9V = 1.4V). The equation $I = V/R$ tells us that a much, much larger current will flow through the Red LED. The result? As you imagined, it might be destroyed.  Even though the microcontroller pin will be damaged in the worst case.
 
 **The Necessity of Redundancy:**
 To tame the Red LED, to bring its brightness into balance with the others, I needed a higher resistance. I calculated that adding a second $220\Omega$ resistor in series—creating a total resistance of $440\Omega$ for the Red channel only—would provide the perfect sentinel. This is the design I chose using multiple resistors:
- - Red Channel: GP13(pin17) -> $220\Omega$ + $220\Omega$ -> Red Anode
- - Green Channel: GP14(pin19) -> $220\Omega$ -> Green Anode
- - Blue Channel: GP15(pin20) -> $220\Omega$ -> Blue Anode
- - Common Ground: Shared Cathode -> GND(jump to pin18)
+ - Red Channel: Pico 2 W GP13 (Pin17) -> $220\Omega$ + $220\Omega$ -> Red Anode
+ - Green Channel: Pico 2 W GP14 (Pin19) -> $220\Omega$ -> Green Anode
+ - Blue Channel: Pico 2 W GP15 (Pin20) -> $220\Omega$ -> Blue Anode
+ - Common Ground: Shared Cathode -> Pico 2 W GND(jump to Pin18)
 
 ![Schematic01](images/20260411_led_blinking.jpg "The schematic diagram to blinking Red/Green/Blue LEDs")
 
@@ -142,16 +142,61 @@ To give Haniwa the "sense of touch", I selected a kind of soil moisture sensor. 
 While simple resistive sensors can be made by inserting electrodes directly into terracotta, they often corrode within weeks due to electrolysis. This capacitive type features electrodes protected from direct contact with the soil. By measuring changes in capacitance rather than resistance, we ensure a much longer life-span, an essential quality for a guardian intended to stay in the garden.
 
 2. Low-Power Design (GPIO-Powered)
-Operating at approximately 5mA to 7mA (less than 10-12mA), this sensor's power draw is well within the limits of a single Raspberry Pi Pico 2 GPIO pin. This allows for a "Power-on-Demand" strategy: the sensor is energized only for a few dozen milliseconds during measurement, drastically reducing power consumption for battery-operated deployments.
+Operating at approximately 5mA to 7mA (less than 10-12mA), this sensor's power draw is well within the limits of a single Raspberry Pi Pico 2 W GPIO pin. This allows for a "Power-on-Demand" strategy: the sensor is energized only for a few dozen milliseconds during measurement, drastically reducing power consumption for battery-operated deployments.
 
 3. Cost-Effectiveness through Mass Production
-These sensors are incredibly affordable (often less than $2 USD when bought in bulk). This low price is a result of economies of scale rather than poor quality. By utilizing mature, 555-timer-based circuits, we leverage reliable, mass-produced technology. This makes the project accessible not just to hobbyists, but potentially to anyone seeking low-cost agricultural solutions.
+These sensors are incredibly affordable (often less than $2 USD when bought in bulk). This low price is a result of economies of scale rather than poor quality. By utilizing mature, reliable, analog-based circuits, we leverage reliable, mass-produced technology. This makes the project accessible not just to hobbyists, but potentially to anyone seeking low-cost agricultural solutions.
+
+**Hardware Setup (Schematic)**
+
+Here is the connection schematic. The setup is straightforward, requiring only three wires between the sensor and the Pico 2 W.
+
+![Schematic02](images/20260412_adding_soil_moisture_sensor.jpg "Adding the capacitive soil moisture sensor.")
+
+**Wiring Details:**
+ - Sensor GND (Black) -> Pico 2 W GND (Pin33)
+ - Sensor AOUT (Yellow) -> Pico 2 W ADC0 (Pin31)
+ - Sensor VCC (Red) -> Pico 2 W GP22 (Pin29)
+
+**Power Saving:**
+While you could connect the VCC (Red wire) to the 3V3 (Pin36) for a simpler setup, doing so keeps the sensor powered continuously. This leads to unnecessary energy consumption and may accelerate electrode degradation.
+
+In this project, I connected VCC to GP22 (Pin29). This allows the Pico 2 W to toggle power to the sensor only during measurements, significantly improving energy efficiency—perfect for battery-operated or long-term monitoring setups.
+
+**Software Configuration(Pico SDK)**
+
+To save power, I used GP22 as a switchable power source, the code is as follows:
+```cpp
+// Measuring process
+gpio_put(22, 1);        // Power ON the sensor
+sleep_ms(50);           // Wait for the sensor to stabilize
+uint16_t result = adc_read(); // Measure the moisture
+gpio_put(22, 0);        // Power OFF immediately!
+```
+**Note:** I set the stabilization wait to 50ms. Depending on your specific sensor, you might be able to shorten this to 10ms to save even more power, but 50ms provides a very stable reading.
+
+**Verification:** 
+Once connected, you will see raw data stream into the serial terminal. To verify the sensor's functionality, simply touch the capacitive surface with your finger.
+
+![ScreenShot](images/20260413_SoilMoistureOnPuTTY.jpg "Captured results of soil moisture on the PuTTY")
+
+As the image shows, the reading value jumps significantly from ~10 to ~200 when moisture (from the finger) is detected, confirming the entire pipeline from sensor to terminal is operational.
+
+## The Aviator’s Box: Encapsulating the Invisible Connection
+The final piece of this puzzle is tcp_connector.py and the establishment of an "invisible" Wi-Fi connection. It's like the drawing of the box of sheep that the pilot drew. If I may be so bold, I too gave up on drawing when I was a child. In high school, I went to career counseling intending to become an industrial designer, but the adults around me stopped me and made me a mechanical engineer instead.
+
+But today, as an engineer, I realized that I don't need to be a "painter" to show the essence. By encapsulating the complex Wi-Fi handshakes and TCP protocols inside this tcp_connector.py, I am presenting a "Box" to the Haniwa.
+
+The Haniwa doesn't see the code; it only sees the "Sheep" (the vital data) living inside. "This is my way of drawing," not with a pencil, but with logic and connection.
+
+"In the past, I followed the 'blueprints' provided by others as a mechanical engineer in a large corporation. Now, that plane has broken down, and I find myself in my own desert.
+
+But I have my tools, my experience and a few years of moratoriam. I may not be able to draw a perfect sheep on demand, but I can build a 'Box.' I can encapsulate complex functions within a simple script like tcp_connector.py. It’s not flashy, and it’s certainly not a masterpiece in the traditional sense, but it is functional, it is resilient, and most importantly, it is mine.
+
+"This is my way of drawing my future."
 
 
-///the next step will be written here///
-!["schematic around Raspberry Pi Pico 2 W"]
-///the next step will be written here///
-
+** --- the next step will be written here --- **
 
 
 ## The Haniwa: A Philosophical Conclusion
