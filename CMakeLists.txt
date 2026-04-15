@@ -15,7 +15,9 @@ pico_sdk_init()
 
 # Define file names
 add_executable(haniwa_monitor
-    haniwa_monitor.cpp 
+    haniwa_main.cpp
+    haniwa_monitor.cpp
+    haniwa_connector.cpp 
 )
 
 # Library link to use blinking LED

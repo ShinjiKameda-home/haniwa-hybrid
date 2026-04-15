@@ -1,34 +1,28 @@
 #include <stdio.h>
+#include "haniwa_monitor.hpp"
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
 #include "hardware/adc.h"
 
-// Define constants
+// Define pin numbers,
+//  depending on your microcontroller board
 const uint LED_RED   = 13;
 const uint LED_GREEN = 14;
 const uint LED_BLUE  = 15;
 const uint SENSOR_VCC = 22;
 
-void blink_led(uint gpio, int duration_sec) {
-    // 1 cycle = 1 second (0.5s ON + 0.5s OFF)
-    // Simply loop 'duration_sec' times to blink for that many seconds.
-    for (int i = 0; i < duration_sec; i++) {
-        gpio_put(gpio, 1); // ON
-        sleep_ms(500);
-        gpio_put(gpio, 0); // OFF
-        sleep_ms(500);
-    }
-}
+// GP26 is ADC0, GP27 is ADC1, and GP28 is ADC2, 
+//  depending on your microcontroller board
+const uint SENSOR_ADC_NUM = 0;
+const uint SENSOR_AOUT = 26 + SENSOR_ADC_NUM;
 
-int main() {
-    // Initialize all of the SDK
-    stdio_init_all();
-
+void haniwa_monitor_init() {
     // Initialize LED pins
     const uint leds[] = {LED_RED, LED_GREEN, LED_BLUE};
     for (uint led : leds) {
         gpio_init(led);
         gpio_set_dir(led, GPIO_OUT);
+        gpio_put(led, 0);
     }
 
     // Initialize Soil Moisture Sensor pins
@@ -37,25 +31,47 @@ int main() {
 
     // Initialize Analog-to-Digital Converter
     adc_init();
-    adc_gpio_init(26);
-    adc_select_input(0);
+    adc_gpio_init(SENSOR_AOUT);
+    adc_select_input(SENSOR_ADC_NUM);
+}
 
-    while(true){
-        // VCC ON
+void haniwa_led_blink_red(int seconds) {
+    for (int i = 0; i < seconds; i++) {
+        gpio_put(LED_RED, 1);
+        sleep_ms(500);
+        gpio_put(LED_RED, 0);
+        sleep_ms(500);
+    }
+}
+
+void haniwa_led_blink_green(int seconds) {
+    for (int i = 0; i < seconds; i++) {
+        gpio_put(LED_GREEN, 1);
+        sleep_ms(500);
+        gpio_put(LED_GREEN, 0);
+        sleep_ms(500);
+    }
+}
+
+void haniwa_led_blink_blue(int seconds) {
+    for (int i = 0; i < seconds; i++) {
+        gpio_put(LED_BLUE, 1);
+        sleep_ms(500);
+        gpio_put(LED_BLUE, 0);
+        sleep_ms(500);
+    }
+}
+
+uint16_t haniwa_get_moisture() {
+        // VCC ON wait stabilizing sensor
         gpio_put(SENSOR_VCC, 1);
         sleep_ms(50);
 
-        // Print data to the PC terminal
-        uint16_t reading = adc_read();
-        printf("Soil Moisture: %d\n", reading);
+        // Read soil moisture result
+        uint16_t rslt = adc_read();
 
-        // VCC OFF
+        // VCC OFF immediately!
         gpio_put(SENSOR_VCC, 0);
 
-        // Blinking LEDs of RGB
-        blink_led(LED_RED, 3);
-        blink_led(LED_GREEN, 3);
-        blink_led(LED_BLUE, 3);
-    }
-
+        return rslt;
 }
