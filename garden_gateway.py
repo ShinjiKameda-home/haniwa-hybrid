@@ -17,7 +17,9 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((host, port))
 
 # Listen for incoming connections
-server_socket.listen(1)
+# Set to 7, inspired by the legend of Japanese Prince Shotoku's ability 
+# to listen to multiple people simultaneously.
+server_socket.listen(7)
 print(f"Server listening on {host}:{port}")
 
 def handle_client(client_socket, address):

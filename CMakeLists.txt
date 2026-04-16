@@ -20,6 +20,12 @@ add_executable(haniwa_guardian
     haniwa_connector.cpp 
 )
 
+# Include the current directory for header files
+target_include_directories(haniwa_guardian PRIVATE 
+    ${CMAKE_CURRENT_LIST_DIR}
+    .  # Include the current directory for header files
+)
+
 # Library link to use blinking LED, AD converter, and WiFi
 target_link_libraries(haniwa_guardian
     pico_stdlib
