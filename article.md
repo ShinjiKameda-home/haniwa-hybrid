@@ -220,5 +220,7 @@ I believe this duality is my ultimate tribute to the ancient people who built th
 
 **Accuracy:** While I strive for technical and historical accuracy, I assume no responsibility for any issues or damages arising from the use of the information in this article.
 
+**Reproducibility:** This article has turned out to be longer than I initially intended when I started this project, so there may be some omissions or inaccuracies in the technical aspects. I am truly sorry to anyone who read this article and thought about trying to replicate it themselves, as I may have disappointed you. It may be a hassle, but I would be grateful if you could let me know in the comments if there is anything that is unclear or if you have any questions.
+
 **A Special Tribute:**
 This project is deeply inspired by the spirit of Antoine de Saint-Exupéry. His stories have been the most cherished companions of my life. As you know, he was a cutting-edge pilot and a traditional writer. He taught us that "What is essential is invisible to the eye." In this garden in Hayama, through a clay statue and a few lines of code, I have tried to capture a small piece of that invisible essence. To the alone man who looked at the stars and had to draw sheep (but he finally drew a box), and to the ancient people who looked at the ocean and kept their hope — this "Story" is my humble gratitude.
