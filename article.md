@@ -195,12 +195,16 @@ But I have my tools, my experience and a few years of moratoriam. I may not be a
 
 "This is my way of drawing my future."
 
+**Realities and Hopes in Solo Development:**
 
-** --- the next step will be written here --- **
+![sequence diagrams before and after coding start]("images/...")
 
+While conventional wisdom dictates that design should be finalized before coding to ensure efficiency (Front-Loading), the reality of solo development often involves a dialogue between theory and practice. I believe that revising my own sequence diagrams mid-process wasn't a sign of poor planning, but rather a reflection of the deeper understanding gained through the act of building. I feel that this agility might be a unique luxury of independent engineering.
+
+Looking ahead, I intend to explore how this hands-on insight can be integrated back into a team environment, whether in a large organization or a small, agile collective. I am committed to finding a harmony between structured planning and the vital insights discovered during implementation, ensuring that the 'truth found at the keyboard and display' informs and strengthens the project's vision from the very start.
 
 ## The Haniwa: A Philosophical Conclusion
-I wish to complete this project with a single, guiding philosophy:
+Thank you for reading this long and poorly written piece up to this point. I wish to complete this project with a single, guiding philosophy:
 
 Technology is a treasure to those who seek its meaning, yet a shadow of fear to those who do not.
 
