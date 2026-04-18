@@ -62,6 +62,12 @@ void haniwa_led_blink_blue(int seconds) {
     }
 }
 
+void turn_off_all_leds(void) {
+    gpio_put(LED_RED, 0);
+    gpio_put(LED_GREEN, 0);
+    gpio_put(LED_BLUE, 0);
+}
+
 uint16_t haniwa_get_moisture() {
         // VCC ON wait stabilizing sensor
         gpio_put(SENSOR_VCC, 1);

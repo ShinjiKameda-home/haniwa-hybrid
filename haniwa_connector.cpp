@@ -3,10 +3,77 @@
 #include "pico/cyw43_arch.h"
 #include "lwip/tcp.h"
 #include "config.hpp"
+#include "haniwa_main.hpp"
 #include "haniwa_connector.hpp"
 
 // Constants
 static bool is_connected = false;
+static uint16_t pending_moisture = 0;
+static LEDStatus latest_status = STATUS_SKIP;
+static bool result_received = false;
+
+// Parse the result string to determine the LED status (internal function)
+static LEDStatus parse_result_to_status(const char* data) {
+    if (strstr(data, "RESULT:GO")) {
+        return STATUS_GO;
+    } else if (strstr(data, "RESULT:TOO_MUCH")) {
+        return STATUS_TOO_MUCH;
+    } 
+    return STATUS_SKIP; 
+}
+
+// Sent callback
+static err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
+    printf("Message reached the server! Waiting for response.\n");
+    return ERR_OK;
+}
+
+// Received callback
+static err_t recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
+    if (p != NULL) {
+        static char tmp_buffer[32] = {0};
+        // Copy the received data into a local buffer safely
+        size_t len = (p->tot_len > 31) ? 31 : p->tot_len;
+        pbuf_copy_partial(p, tmp_buffer, len, 0);
+        tmp_buffer[len] = '\0';
+        
+        // Set the flag to indicate that a new result has been received
+        result_received = true;
+
+        // Parse the result and update the latest status
+        latest_status = parse_result_to_status(tmp_buffer);
+        printf("Haniwa: Received result from the HomeServer.\n");
+        
+        // Close the connection after processing the result immediately
+        tcp_recved(tpcb, p->tot_len);
+        pbuf_free(p);
+        tcp_close(tpcb);
+    }
+    return ERR_OK;
+}
+
+// Connected Callback
+static err_t connected_callback(void *arg, struct tcp_pcb *tpcb, err_t err) {
+    if (err == ERR_OK) {
+        // register callbacks for receiving data and sent acknowledgments
+        tcp_recv(tpcb, recv_callback);
+        tcp_sent(tpcb, sent_callback);
+
+        // Prepare the moisture data to send
+        char msg[32];
+        snprintf(msg, sizeof(msg), "MOISTURE:%u", pending_moisture);
+
+        // Send the moisture data to the server
+        tcp_write(tpcb, msg, strlen(msg), TCP_WRITE_FLAG_COPY);
+        tcp_output(tpcb);
+
+        printf("Connection established. Reported: %s\n", msg);
+   } else {
+        printf("Error: Connection failed (code: %d).\n", err);
+        tcp_close(tpcb);
+    }
+    return ERR_OK;
+}
 
 // Initialize
 bool haniwa_connector_init() {
@@ -42,29 +109,8 @@ bool haniwa_connector_init() {
     return false;
 }
 
-// Sent callback
-static err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
-    printf("Message reached the server! Closing connection.\n");
-    tcp_close(tpcb); // After sending the message, we can close the connection
-    return ERR_OK;
-}
-
-// Sending data Callback
-static err_t connected_callback(void *arg, struct tcp_pcb *tpcb, err_t err) {
-    if (err == ERR_OK) {
-        const char *msg = "Hello from the Aviator's Box (C++).";
-        tcp_write(tpcb, msg, strlen(msg), TCP_WRITE_FLAG_COPY);
-        tcp_output(tpcb);
-        printf("Transmission initiated: Waiting for server ACK.\n");
-   } else {
-        printf("Error: Connection callback failed (code: %d).\n", err);
-        tcp_close(tpcb);
-    }
-    return ERR_OK;
-}
-
-// Say hello to the HomeServer
-void haniwa_connector_send_hello() {
+// Say hello to the HomeServer (connection logic)
+void haniwa_send_hello() {
     // 1. Make a new TCP PCB (Protocol Control Block) which is like a "socket" in the TCP/IP world
     struct tcp_pcb *pcb = tcp_new();
     if (!pcb) {
@@ -79,13 +125,38 @@ void haniwa_connector_send_hello() {
         return;
     }
 
-    printf("Connecting to server at %s:%d...\n", SERVER_IP, SERVER_PORT);
-
     // 3. Start connecting to the server
     // When the connection is complete, connected_callback will be called
     err_t err = tcp_connect(pcb, (ip_addr_t *)&server_addr, SERVER_PORT, connected_callback);
     
     if (err != ERR_OK) {
         printf("Error: tcp_connect initiation failed (code: %d).\n", err);
+        tcp_abort(pcb); // Release the PCB immediately on failure
     }
 }
+
+// Send moisture data to the HomeServer
+void haniwa_send_data(uint16_t moisture) {
+    // Store the latest moisture value to be sent when connected
+    pending_moisture = moisture; 
+
+    // Reuse the connection logic to send data
+    haniwa_send_hello(); 
+}
+
+// Check a new result from the HomeServer
+bool haniwa_recv_result(LEDStatus* out_status) {
+    if (result_received) {
+        *out_status = latest_status;
+        result_received = false; // reset the flag for the next result
+        return true;
+    }
+    return false;
+}
+
+// Polling function to check for new results (can be called in the main loop)
+void haniwa_poll_result() {
+    cyw43_arch_poll(); // Listen for incoming messages and handle Wi-Fi events
+}
+
+
