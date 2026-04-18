@@ -45,7 +45,8 @@ int main() {
     }
 
     // Test Initialization
-    haniwa_send_hello();
+    uint16_t val = haniwa_get_moisture();
+    haniwa_send_data(val);
     haniwa_led_blink_red(1);
     haniwa_led_blink_green(1);
     haniwa_led_blink_blue(1);
@@ -70,7 +71,7 @@ int main() {
             last_report_time = current_time;
 
             // Get moisture value from the sensor
-            uint16_t val = haniwa_get_moisture();
+            val = haniwa_get_moisture();
 
             // Print to the PC Terminal for debug
             printf("Current moisture: %u\n", val);
