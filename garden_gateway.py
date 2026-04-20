@@ -90,23 +90,37 @@ def handle_client(client_socket, address):
                 if ':' in message:
                     parts = message.split(':')
                     update_sticker(parts[0], int(parts[1]), MOISTURE_FILE)
-                client_socket.send(f"Echo: {message}".encode('utf-8'))
+                garden_status = shm.buf[1] # Read the watering decision from shared memory
+                response = f"STATUS:{garden_status}"
+                client_socket.send(response.encode('utf-8'))
             except UnicodeDecodeError:
                 print("Decode error occurred and ignored")
                 continue
+            except Exception as e:
+                print(f"Error processing client message: {e}")
+                break
     finally:
         client_socket.close()
         print(f"Client disconnected: {address}")
 
-try:
-    while True:
-        # Accept incoming connections
-        client_socket, address = server_socket.accept()
-        # Handle client in a separate thread
-        client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        client_thread.daemon = True
-        client_thread.start()
-except KeyboardInterrupt:
-    print("Server shutting down...")
-finally:
-    server_socket.close()
+def main():
+    global shm
+    connect_to_shm()  # Connect to shared memory before accepting clients
+
+    try:
+        print("Gateway Server started...")
+        while True:
+            client_socket, address = server_socket.accept()
+            client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
+            client_thread.daemon = True
+            client_thread.start()
+    except KeyboardInterrupt:
+        print("Server shutting down...")
+    finally:
+        server_socket.close()
+        if shm is not None:
+            shm.close()
+            print("Shared memory closed.")
+
+if __name__ == "__main__":
+    main()

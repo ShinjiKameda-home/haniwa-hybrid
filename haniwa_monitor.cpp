@@ -62,6 +62,14 @@ void haniwa_led_blink_blue(int seconds) {
     }
 }
 
+void haniwa_led_hf_blue(int seconds) {
+    for (int i = 0; i < 5*seconds; i++) {
+        gpio_put(LED_BLUE, 1);
+        sleep_ms(100);
+        gpio_put(LED_BLUE, 0);
+        sleep_ms(100);
+    }
+}
 void turn_off_all_leds(void) {
     gpio_put(LED_RED, 0);
     gpio_put(LED_GREEN, 0);

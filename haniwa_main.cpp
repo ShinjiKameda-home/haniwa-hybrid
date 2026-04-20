@@ -24,6 +24,11 @@ void update_led_status(LEDStatus status) {
             printf("Haniwa: Blue Alert! TOO_MUCH water.\n");
             break;
 
+        case STATUS_ERROR:
+            haniwa_led_hf_blue(10);
+            printf("Haniwa: Blue Alert!! ERROR occurred.\n");
+            break;
+
         case STATUS_SKIP:
         default:
             haniwa_led_blink_green(10);
@@ -50,6 +55,7 @@ int main() {
     haniwa_led_blink_red(1);
     haniwa_led_blink_green(1);
     haniwa_led_blink_blue(1);
+    haniwa_led_hf_blue(1);
     sleep_ms(500);
 
     // Main loop
