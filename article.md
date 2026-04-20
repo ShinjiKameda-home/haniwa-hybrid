@@ -197,25 +197,30 @@ But I have my tools, my experience and a few years of moratoriam. I may not be a
 
 **Realities and Hopes in Solo Development:**
 
-![sequence diagrams before and after coding start]("images/...")
+![Sequence diagrams](images/... "Sequence diagrams before and after coding start")
 
 While conventional wisdom dictates that design should be finalized before coding to ensure efficiency (Front-Loading), the reality of solo development often involves a dialogue between theory and practice. I believe that revising my own sequence diagrams mid-process wasn't a sign of poor planning, but rather a reflection of the deeper understanding gained through the act of building. I feel that this agility might be a unique luxury of independent engineering.
 
 Looking ahead, I intend to explore how this hands-on insight can be integrated back into a team environment, whether in a large organization or a small, agile collective. I am committed to finding a harmony between structured planning and the vital insights discovered during implementation, ensuring that the 'truth found at the keyboard and display' informs and strengthens the project's vision from the very start.
 
+![Winking Haniwa](images/... "Winking Haniwa, Green LED means that you can SKIP watering.")
+![Winking Haniwa](images/... "Winking Haniwa, Red LED means that you should GO watering.")
+![Winking Haniwa](images/... "Winking Haniwa, Blue LED means that watering is TOO_MUCH.")
+
+I made the Haniwa's eyes glow. Here's the image. 1. For those who try to understand the meaning of the color, he kindly informs them whether or not the garden plants need watering. 2. For those who don't try to understand, it seems as a shadow of fear, like an active scarecrow. I tried to make these two functions coexist in a single action. Could it have let you think so too?
+
+The concept has been simple: By cross-referencing local soil moisture with sky weather forecasts, the Cloud-AI determines the necessity of watering. The moment a "person" is detected by its Edge-AI eye, the Haniwa statue’s gaze ignites.
+
+Within this single movement, I have infused two distinct functions (souls):
+ - For my family and me who understand the language of its blinking colors, it serves as a beacon of insight, guiding our hands how to nurture the garden.
+ - For an intruder who knows nothing of its meaning, it stands just as a strange guardian, a spectral warning that drives them away.
+
 ## The Haniwa: A Philosophical Conclusion
 Thank you for reading this long and poorly written piece up to this point. I wish to complete this project with a single, guiding philosophy:
 
-Technology is a treasure to those who seek its meaning, yet a shadow of fear to those who do not.
+"Technology is a treasure to those who seek its meaning, yet a shadow of fear to those who do not."
 
-The concept is simple: By cross-referencing local soil moisture with sky weather forecasts, the Cloud-AI determines the necessity of watering. The moment a "person" is detected by its Edge-AI eye, the Haniwa statue’s gaze ignites.
-
-Within this single movement, I have infused two distinct functions (souls):
- - For my family and me who understand the language of its blinking colors, it serves as a beacon of insight, guiding our hands to nurture the garden.
- - For an intruder who knows nothing of its meaning, it stands just as a strange guardian, a spectral warning that drives them away.
-
-I believe this duality is my ultimate tribute to the ancient people who built the Kofun tumuli. Just as their monuments symbolized both a solemn mourning for the departed and a prayer for the safe seafaring of the living, I, too, strive to create systems that carry such depth and purpose.
-
+I believe this duality can become my ultimate tribute to the ancient people who built the Kofun tumuli. Just as their monuments symbolized both a solemn mourning for the departed and a prayer for the safe seafaring of the living, I, too, strive to create systems that carry such depth and purpose.
 
 ## Disclaimer
 **Personal Project:** This project is a personal hobby and technical experiment. It is not affiliated with, sponsored by, or endorsed by any of the organizations mentioned (e.g., Shibayama Haniwa Museum).
