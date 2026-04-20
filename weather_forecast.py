@@ -20,7 +20,8 @@ TEMP_FILE = "../permission_temp.json"
 CHECK_INTERVAL = 3 * 60 * 60 # 3 hours
 LOG_FILE = "../weather_observation_log.csv"
 RAIN_SLOTS_THRESHOLD = 2  # Threshold for deciding watering based on rain forecast
-SHM_NAME = "garden_person_presence"
+SHM_NAME = "memories_of_haniwa_garden"
+SHM_SIZE = 8  # Size in bytes for shared memory (enough for a few flags or small data)
 MOISTURE_FILE = "../soil_moisture.json"
 MOISTURE_THRESHOLD = 30  # Example threshold for dry soil
 
@@ -173,16 +174,25 @@ def get_weather(force_report=False):
         # Silent update for other time slots (9:30, 12:30, etc.)
         print(f"[{now.strftime('%H:%M')}] System updated & Logged (Silent mode).")
 
-def main_loop():
-    # Initialize shared memory for the Person detection
+def init_shm():
+    """Initialize shared memory for person detection."""
     try:
-        shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=1)
+        send_telegram("Hello BirdWatcher! Making Shared Memory for Person Detection...")
+        shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=SHM_SIZE)
+        send_telegram("Done. Modifying permissions for shared memory...")
+        os.chmod(f"/dev/shm/" + SHM_NAME, 0o666)
+        send_telegram("Done. Initializing Shared Memory for No Person...")
         shm.buf[0] = 0  # Initialize presence to 0 (no person)
-        print(f"Shared memory '{SHM_NAME}' created by Weather Forecast.")
+        send_telegram("Done. Shared Memory initialized.")
+        print(f"Shared memory '{SHM_NAME}' created.")
     except FileExistsError:
         shm = shared_memory.SharedMemory(name=SHM_NAME)
         print(f"Shared memory '{SHM_NAME}' already exists, reusing it.")
+    return shm
 
+def main_loop():
+    # Initialize shared memory for the Person detecting EYE
+    shm = init_shm()
     # Send startup notification
     send_telegram("Mission Start: Monitoring the Weather...")
     # Force reporting for the first time getting weather data
@@ -196,7 +206,7 @@ def main_loop():
             is_present = bool(shm.buf[0])
             send_telegram(f"Person detected in the garden!: {is_present}")
             decision = make_decision()  # Make a decision for watering based on weather data and soil moisture
-            ## send_led_command(decision)  # Send command to the LED system via garden_gateway.service
+            shm.buf[1] = decision              # Set a flag for Watering decision
             # Send Telegram notification based on the decision
             if decision == 0:
                 send_telegram("Watering: SKIP (Green LED)")

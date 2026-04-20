@@ -2,13 +2,21 @@ import socket
 import json
 import tempfile
 import os
-from datetime import datetime
+import datetime
+import time
 from dotenv import load_dotenv
 import threading
+from multiprocessing import shared_memory
 
 load_dotenv()
 HOST = os.getenv('HOST_IP', '127.0.0.1')
 PORT = int(os.getenv('PORT_NUM', '30000'))
+
+# Global Constants
+SHM_NAME = "memories_of_haniwa_garden"
+
+# Global Variables
+shm = None
 
 # The path to the data file not to depend on the current environment.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +36,26 @@ server_socket.bind((host, port))
 # to listen to multiple people simultaneously.
 server_socket.listen(7)
 print(f"Server listening on {host}:{port}")
+
+def connect_to_shm():
+    """Connect to the existing shared memory created by Weather Forecast, with retry logic."""
+    global shm
+    while True:
+        try:
+            # Attempt to connect to the existing shared memory created by Weather Forecast
+            shm = shared_memory.SharedMemory(name=SHM_NAME)
+            break  # Successfully connected, exit the loop
+        except FileNotFoundError:
+            print("Waiting for Weather Forecast to create shared memory...")
+            time.sleep(2)  # Wait before retrying
+            
+def read_decision():
+    """Read the watering decision from shared memory."""
+    if shm is not None:
+        return int(shm.buf[1])  # Return the watering decision
+    else:
+        print("Shared memory not connected.")
+        return 3
 
 def update_sticker(label, value, file_path):
     """Atomically update the sticker data in the JSON file"""
