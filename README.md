@@ -5,7 +5,7 @@ The HANIWA Guardian is a hybrid IoT system bridging ancient Japanese terracotta 
 ## 📖 Full Documentation & Story
 For the complete build guide, system architecture, and the philosophy behind this project, please visit the official article on Hackster.io:
 
-👉 **[The HANIWA Guardian: Timeless yet Cutting-edge Terracotta Irrigation and Smart Scarecrow Hybrid System](ここにHacksterの記事URLを貼る)**
+👉 **[The HANIWA Guardian: Timeless yet Cutting-edge Terracotta Irrigation and Smart Scarecrow Hybrid System](https://www.hackster.io/shinji_kameda/the-haniwa-timeless-yet-cutting-edge-irrigatable-scarecrow-57b38a)**
 
 ## 🛠️ Quick Tech Specs
 - **MCU**: Raspberry Pi Pico 2 W
