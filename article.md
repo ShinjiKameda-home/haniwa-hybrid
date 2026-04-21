@@ -215,6 +215,40 @@ Within this single movement, I have infused two distinct functions (souls):
  - For my family and me who understand the language of its blinking colors, it serves as a beacon of insight, guiding our hands how to nurture the garden.
  - For an intruder who knows nothing of its meaning, it stands just as a strange guardian, a spectral warning that drives them away.
 
+## Shared Memory: "What is essential is invisible to the eye."
+During initial debugging, I implemented Telegram notifications to monitor the system's behavior. However, I noticed a critical flaw: a 7-second latency between stepping into the garden and receiving the alert on my phone, and a 5-second delay even after returning indoors.
+
+If this latency were mirrored in the Haniwa’s eyes, a fast-moving intruder could traverse the garden and enter the house before the "Active Scarecrow" even ignited. I realized the "essential" requirement of this project: The response time between detection and action must be near-instantaneous.
+
+Originally, my three backend services (DrWadachi, BirdWatcher, and GardenGateway) were designed to communicate by reading and writing to shared JSON files. While simple, file I/O is notoriously slow and prone to race conditions, easily adding seconds of overhead. To bridge this gap, I decided to venture into Inter-Process Communication (IPC) via Shared Memory.
+
+It required a bit of finesse to master, but by importing shared_memory into all three Python services, I created a lightning-fast data highway.
+
+``` python
+from multiprocessing import shared_memory
+
+# The unique identifier for our inter-process communication
+SHM_NAME = "memories_of_haniwa_garden"
+SHM_SIZE = 8  # Enough space for our status flags
+
+# Logic to initialize the shared memory segment
+try:
+    # 'Dr. Wadachi' (Main Service) creates the memory block
+    shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=SHM_SIZE)
+    print("Shared Memory created.")
+except FileExistsError:
+    # If the block exists from a previous run, we simply attach to it
+    shm = shared_memory.SharedMemory(name=SHM_NAME)
+    print("Attached to existing Shared Memory.")
+
+# Now, any process can access the data via shm.buf
+# e.g., shm.buf[0] = 1 (Person detected!)
+```
+
+By mapping the system's state—weather alerts, motion flags, and soil status—directly into a raw byte buffer in RAM, the latency dropped from seconds to milliseconds. Now, the moment the BirdWatcher spots a shadow, the DrWadachi picks up the change in memory to make a decision for watering, and the GardenGateway pokes the Haniwa via TCP before the intruder can take another step.
+
+In this system, the "Essential" (the data) is truly invisible to the eye, residing deep within the silicon, but its impact is felt the very instant the Haniwa’s eyes turn red.
+
 ## The Haniwa: A Philosophical Conclusion
 Thank you for reading this long and poorly written piece up to this point. I wish to complete this project with a single, guiding philosophy:
 
