@@ -177,13 +177,11 @@ def get_weather(force_report=False):
 def init_shm():
     """Initialize shared memory for person detection."""
     try:
-        send_telegram("Hello BirdWatcher! Making Shared Memory for Person Detection...")
         shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=SHM_SIZE)
-        send_telegram("Done. Modifying permissions for shared memory...")
         os.chmod(f"/dev/shm/" + SHM_NAME, 0o666)
-        send_telegram("Done. Initializing Shared Memory for No Person...")
-        shm.buf[0] = 0  # Initialize presence to 0 (no person)
-        send_telegram("Done. Shared Memory initialized.")
+        shm.buf[0] = 0  # Initialize Person presence to 0 (NOT detected)
+        shm.buf[1] = 0  # Initialize Watering decision to 0 (SKIP)
+        send_telegram("Shared Memory initialized.")
         print(f"Shared memory '{SHM_NAME}' created.")
     except FileExistsError:
         shm = shared_memory.SharedMemory(name=SHM_NAME)
