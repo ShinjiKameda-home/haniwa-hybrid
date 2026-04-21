@@ -70,6 +70,7 @@ def update_sticker(label, value, file_path):
         with tempfile.NamedTemporaryFile('w', dir=dir_name, delete=False, suffix='.tmp') as tf:
             json.dump(data_to_save, tf, indent=4)
             temp_name = tf.name
+            os.fchmod(tf.fileno(), 0o644)
         # 2. Atomically replace the original file with the temporary file
         os.replace(temp_name, file_path)
         print(f"Sticker updated: {label}={value}")
