@@ -203,6 +203,53 @@ While conventional wisdom dictates that design should be finalized before coding
 
 Looking ahead, I intend to explore how this hands-on insight can be integrated back into a team environment, whether in a large organization or a small, agile collective. I am committed to finding a harmony between structured planning and the vital insights discovered during implementation, ensuring that the 'truth found at the keyboard and display' informs and strengthens the project's vision from the very start.
 
+After lots of lonely try-and-errors, I have arrived at a conclusion, which is not only using an environmental sensor, but also combining such a real-time local data and the world wide open information. The code of making decision is here.
+
+``` python
+def make_decision() -> int:
+    """
+    Evaluates environmental factors to determine if watering is necessary.
+    Returns:
+        0: SKIP (Green LED)     - Sufficient moisture or rain detected/predicted.
+        1: GO   (Red LED)       - Dry soil and no significant rain expected.
+        2: TOO_MUCH  (Blue LED) - Sufficient moisture and more rain predicted.
+        3: ERROR (Blue LED)     - System error or data missing, high frequency of blinking.
+    """
+    try:
+        # 1. Fetch real-time soil moisture from the local sensor data
+        with open(MOISTURE_FILE, 'r') as f:
+            moisture_data = json.load(f)
+            # Default to 100 (wet) to prevent accidental over-watering if file is corrupt
+            cur_moisture = int(moisture_data.get("MOISTURE", 100))
+        # 2. Analyze weather trends: past, present, and future forecast
+        with open(LOG_FILE, 'r') as f:
+            rows = list(csv.DictReader(f))
+            if not rows:
+                return 3 # Error: No historical data found
+            # Integrate all rain factors into a single score
+            rain_slots = 0
+            # Weighted historical/current rain (Past & Present)
+            if rows[-1]['weather'] == 'Rain':
+                rain_slots += 3
+            if len(rows) >= 2 and rows[-2]['weather'] == 'Rain':
+                rain_slots += 2
+            if len(rows) >= 3 and rows[-3]['weather'] == 'Rain':
+                rain_slots += 1
+            # Predicted rain intensity (Future)
+            rain_slots += int(rows[-1]['rain_slots_48h'])
+        # 3. Final Decision Logic
+        #    Skip if accumulated rain score is high or soil is already moist
+        if rain_slots > RAIN_SLOTS_THRESHOLD and cur_moisture > MOISTURE_THRESHOLD:
+            return 2  # TOO_MUCH
+        elif rain_slots > RAIN_SLOTS_THRESHOLD or cur_moisture > MOISTURE_THRESHOLD:
+            return 0  # SKIP
+        else:
+            return 1  # GO
+    except Exception as e:
+        print(f"Decision Error: {e}")
+        return 3  # ERROR
+```
+
 ![Winking Haniwa](images/... "Winking Haniwa, Green LED means that you can SKIP watering.")
 ![Winking Haniwa](images/... "Winking Haniwa, Red LED means that you should GO watering.")
 ![Winking Haniwa](images/... "Winking Haniwa, Blue LED means that watering is TOO_MUCH.")
