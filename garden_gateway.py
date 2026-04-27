@@ -96,6 +96,8 @@ def handle_client(client_socket, address):
                 if ':' in message:
                     parts = message.split(':')
                     update_sticker(parts[0], int(parts[1]), MOISTURE_FILE)
+                    current_status = read_decision()
+                    client_socket.send(f"{current_status}".encode('utf-8'))
             except BlockingIOError:
                 pass # No data received, just continue to check for updates            
             except UnicodeDecodeError:
@@ -103,12 +105,15 @@ def handle_client(client_socket, address):
   
             is_person_present = (shm.buf[0] == 1)
             if is_person_present and not was_person_present:
-                time.sleep_ms(50)  # Small delay to ensure the decision is updated in shared memory
-                current_status = shm.buf[1]
-                response = f"{current_status}"
-                client_socket.send(response.encode('utf-8'))
+                for _ in range(50):
+                    time.sleep(0.001)
+                    if shm.buf[0] == 0: # wather_forecast updates the status to 0, when the status is completely updated.
+                        break
+                current_status = read_decision()
+                client_socket.send(f"{current_status}".encode('utf-8'))
                 print(f"New event detected: Status{current_status}")            
             was_person_present = is_person_present
+            time.sleep(0.01)
 
     except Exception as e:
         print(f"Error processing client message: {e}")
