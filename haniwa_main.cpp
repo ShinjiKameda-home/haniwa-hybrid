@@ -49,15 +49,17 @@ int main() {
         printf("Haniwa Connector: The meeting has been rejected.\n");
         return -1; 
     }
-
+    
     // Test Initialization
-    uint16_t val = haniwa_get_moisture();
-    haniwa_send_data(val);
     haniwa_led_blink_red(1);
     haniwa_led_blink_green(1);
     haniwa_led_blink_blue(1);
     haniwa_led_hf_blue(1);
-
+    uint16_t val = haniwa_get_moisture();
+    printf("Current moisture: %u\n", val);
+    haniwa_send_data(val);
+    last_report_time = to_ms_since_boot(get_absolute_time());
+    
     // Main loop
     while (true) {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
@@ -79,7 +81,7 @@ int main() {
             // Get moisture value from the sensor
             val = haniwa_get_moisture();
 
-            // Print to the PC Terminal for debug
+            // Print to the PC Terminal
             printf("Current moisture: %u\n", val);
 
             // Send moisture value to the HomeServer

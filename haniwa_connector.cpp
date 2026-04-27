@@ -26,7 +26,7 @@ static LEDStatus parse_result_to_status(const char* data) {
 
 // Sent callback
 static err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
-    printf("Message reached the server! Waiting for response.\n");
+    printf("Message reached the server!\n");
     return ERR_OK;
 }
 
@@ -78,6 +78,11 @@ static err_t connected_callback(void *arg, struct tcp_pcb *tpcb, err_t err) {
         // register callbacks for receiving data and sent acknowledgments
         tcp_recv(tpcb, recv_callback);
         tcp_sent(tpcb, sent_callback);
+        // Send any pending moisture data immediately upon connection
+        // char msg[32];
+        // snprintf(msg, sizeof(msg), "MOISTURE:%u", pending_moisture);
+        // tcp_write(tpcb, msg, strlen(msg), TCP_WRITE_FLAG_COPY);
+        // tcp_output(tpcb);
     } else {
         printf("Error: Connection failed (code: %d).\n", err);
         tcp_close(tpcb);
