@@ -2,7 +2,7 @@ import socket
 import json
 import tempfile
 import os
-import datetime
+from datetime import datetime
 import time
 from dotenv import load_dotenv
 import threading
@@ -79,6 +79,8 @@ def update_sticker(label, value, file_path):
 
 def handle_client(client_socket, address):
     """Handle client connection"""
+    # Set a timeout for client operations to prevent hanging connections (16 minutes)
+    client_socket.settimeout(960.0)
     print(f"Client connected: {address}")
     try:
         while True:

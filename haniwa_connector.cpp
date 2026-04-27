@@ -30,24 +30,34 @@ static err_t sent_callback(void *arg, struct tcp_pcb *tpcb, u16_t len) {
 
 // Received callback
 static err_t recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
-    if (p != NULL) {
+    if (p == NULL) {
+        // Server closed the connection
+        printf("Connection closed by server.\n");
+        tcp_arg(tpcb, NULL);
+        tcp_sent(tpcb, NULL);
+        tcp_recv(tpcb, NULL);
+        tcp_close(tpcb);
+        return ERR_OK;
+    }
+
+    if (err == ERR_OK && p->tot_len > 0) {
         static char tmp_buffer[32] = {0};
-        // Copy the received data into a local buffer safely
         size_t len = (p->tot_len > 31) ? 31 : p->tot_len;
         pbuf_copy_partial(p, tmp_buffer, len, 0);
         tmp_buffer[len] = '\0';
         
-        // Set the flag to indicate that a new result has been received
         result_received = true;
-
-        // Parse the result and update the latest status
         latest_status = parse_result_to_status(tmp_buffer);
-        printf("Haniwa: Received result from the HomeServer.\n");
+        printf("Received result from the HomeServer.\n");
         
-        // Close the connection after processing the result immediately
         tcp_recved(tpcb, p->tot_len);
         pbuf_free(p);
-        tcp_close(tpcb);
+        // Not close the connection immediately to allow for potential further communication
+        // tcp_close(tpcb);
+
+    } else {
+        // Error or empty packet, just free it
+        pbuf_free(p);
     }
     return ERR_OK;
 }
@@ -82,6 +92,7 @@ bool haniwa_connector_init() {
         return false;
     }
     cyw43_arch_enable_sta_mode();
+    cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_PM2_POWERSAVE_MODE, 200, 1, 1, 10));
 
     const int max_retries = 3; // To acquire a brilliant military strategist...
 
