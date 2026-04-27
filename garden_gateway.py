@@ -81,30 +81,41 @@ def handle_client(client_socket, address):
     """Handle client connection"""
     # Set a timeout for client operations to prevent hanging connections (16 minutes)
     client_socket.settimeout(960.0)
+    client_socket.setblocking(False)
+    was_person_present = False  # To track the last sent status and avoid redundant sends
     print(f"Client connected: {address}")
+
     try:
         while True:
-            data = client_socket.recv(1024)
-            if not data:
-                break
-            try:
+            try:    
+                data = client_socket.recv(1024)
+                if not data: break
+
                 message = data.decode('utf-8').strip()
                 print(f"Received: {message}")
                 if ':' in message:
                     parts = message.split(':')
                     update_sticker(parts[0], int(parts[1]), MOISTURE_FILE)
-                garden_status = shm.buf[1] # Read the watering decision from shared memory
-                response = f"STATUS:{garden_status}"
-                client_socket.send(response.encode('utf-8'))
+            except BlockingIOError:
+                pass # No data received, just continue to check for updates            
             except UnicodeDecodeError:
-                print("Decode error occurred and ignored")
-                continue
-            except Exception as e:
-                print(f"Error processing client message: {e}")
-                break
+                pass  # Ignore decode errors and continue
+  
+            is_person_present = (shm.buf[0] == 1)
+            if is_person_present and not was_person_present:
+                time.sleep_ms(50)  # Small delay to ensure the decision is updated in shared memory
+                current_status = shm.buf[1]
+                response = f"{current_status}"
+                client_socket.send(response.encode('utf-8'))
+                print(f"New event detected: Status{current_status}")            
+            was_person_present = is_person_present
+
+    except Exception as e:
+        print(f"Error processing client message: {e}")
     finally:
         client_socket.close()
-        print(f"Client disconnected: {address}")
+        print(f"Client disconnected: {address}")    
+
 
 def main():
     global shm

@@ -41,6 +41,7 @@ void update_led_status(LEDStatus status) {
 int main() {
     // Initialize hardware itself
     stdio_init_all();
+    sleep_ms(500);
 
     // Initialize software modules
     haniwa_monitor_init();
@@ -56,7 +57,6 @@ int main() {
     haniwa_led_blink_green(1);
     haniwa_led_blink_blue(1);
     haniwa_led_hf_blue(1);
-    sleep_ms(500);
 
     // Main loop
     while (true) {
@@ -68,7 +68,7 @@ int main() {
         // Let LED blinking to inform the person the result when the "Person" has come to the garden
         if (haniwa_recv_result(&current_status)) {
             update_led_status(current_status); 
-            printf("Haniwa: Updated LED status based on the result.\n");
+            printf("Haniwa: Updated LED status based on the decision.\n");
         }
 
         // Check if it's time to report moisture to the HomeServer

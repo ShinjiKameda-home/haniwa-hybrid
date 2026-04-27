@@ -11,14 +11,16 @@ static bool is_connected = false;
 static uint16_t pending_moisture = 0;
 static LEDStatus latest_status = STATUS_SKIP;
 static bool result_received = false;
+static struct tcp_pcb *haniwa_pcb = NULL; // Global PCB for managing the connection
 
 // Parse the result string to determine the LED status (internal function)
 static LEDStatus parse_result_to_status(const char* data) {
-    if (strstr(data, "RESULT:GO")) {
-        return STATUS_GO;
-    } else if (strstr(data, "RESULT:TOO_MUCH")) {
-        return STATUS_TOO_MUCH;
-    } 
+    if (data == NULL || data[0] == '\0') {
+        return STATUS_SKIP;
+    }
+    if (data[0] >= '0' && data[0] <= '3') {
+        return (LEDStatus)(data[0] - '0');
+    }
     return STATUS_SKIP; 
 }
 
@@ -33,10 +35,15 @@ static err_t recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_
     if (p == NULL) {
         // Server closed the connection
         printf("Connection closed by server.\n");
+
+        is_connected = false;
+        haniwa_pcb = NULL; // Clear the PCB reference
+
         tcp_arg(tpcb, NULL);
         tcp_sent(tpcb, NULL);
         tcp_recv(tpcb, NULL);
         tcp_close(tpcb);
+
         return ERR_OK;
     }
 
@@ -48,7 +55,7 @@ static err_t recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_
         
         result_received = true;
         latest_status = parse_result_to_status(tmp_buffer);
-        printf("Received result from the HomeServer.\n");
+        printf("Received result from the HomeServer. Status: %d\n", latest_status);
         
         tcp_recved(tpcb, p->tot_len);
         pbuf_free(p);
@@ -65,28 +72,73 @@ static err_t recv_callback(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_
 // Connected Callback
 static err_t connected_callback(void *arg, struct tcp_pcb *tpcb, err_t err) {
     if (err == ERR_OK) {
+        is_connected = true;
+        haniwa_pcb = tpcb; // Store the PCB for future use
+        printf("Successfully connected to the HomeServer.\n");
         // register callbacks for receiving data and sent acknowledgments
         tcp_recv(tpcb, recv_callback);
         tcp_sent(tpcb, sent_callback);
-
-        // Prepare the moisture data to send
-        char msg[32];
-        snprintf(msg, sizeof(msg), "MOISTURE:%u", pending_moisture);
-
-        // Send the moisture data to the server
-        tcp_write(tpcb, msg, strlen(msg), TCP_WRITE_FLAG_COPY);
-        tcp_output(tpcb);
-
-        printf("Connection established. Reported: %s\n", msg);
-   } else {
+    } else {
         printf("Error: Connection failed (code: %d).\n", err);
         tcp_close(tpcb);
+        haniwa_pcb = NULL;
+        is_connected = false;
     }
     return ERR_OK;
 }
 
+// Check if the device is currently connected to the server
+bool check_connection() {
+    is_connected = (haniwa_pcb != NULL && haniwa_pcb->state == ESTABLISHED);
+    return is_connected;    
+}
+
+// Connect to the HomeServer
+bool connect_to_server() {
+    // 1. Make a new TCP PCB (Protocol Control Block) which is like a "socket" in the TCP/IP world
+    haniwa_pcb = tcp_new();
+    if (!haniwa_pcb) {
+        printf("Error: Failed to allocate PCB.\n");
+        haniwa_pcb = NULL;
+        is_connected = false;
+        return false;
+    }
+
+    // 2. Exchange string format IP address to binary format
+    ip4_addr_t server_addr;
+    if (!ip4addr_aton(SERVER_IP, &server_addr)) {
+        printf("Error: Invalid server IP address format.\n");
+        haniwa_pcb = NULL;
+        is_connected = false;
+        return false;
+    }
+
+    // 3. Start connecting to the server
+    // When the connection is complete, connected_callback will be called
+    err_t err = tcp_connect(haniwa_pcb, (ip_addr_t *)&server_addr, SERVER_PORT, connected_callback);
+    
+    if (err != ERR_OK) {
+        printf("Error: tcp_connect initiation failed (code: %d).\n", err);
+        tcp_abort(haniwa_pcb); // Release the PCB immediately on failure
+        haniwa_pcb = NULL;
+        is_connected = false;
+        return false;
+    }
+
+    // Connection initiation successful, now we wait for the connected_callback to be called
+    return true;
+}
+
 // Initialize
 bool haniwa_connector_init() {
+    if (check_connection())
+        return true; // Already connected, no need to initialize again
+
+    if (haniwa_pcb) {
+        tcp_abort(haniwa_pcb); // Abort any existing PCB to ensure a clean state
+        haniwa_pcb = NULL;
+    }
+
     if (cyw43_arch_init()) {
         printf("Error: Wi-Fi chip initialization failed.\n");
         return false;
@@ -104,6 +156,8 @@ bool haniwa_connector_init() {
             WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 10000
         );
 
+        connect_to_server(); // Start the TCP connection process
+        
         if (state == 0) {
             printf("Connected. IP: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_default)));
             is_connected = true;
@@ -120,39 +174,25 @@ bool haniwa_connector_init() {
     return false;
 }
 
-// Say hello to the HomeServer (connection logic)
-void haniwa_send_hello() {
-    // 1. Make a new TCP PCB (Protocol Control Block) which is like a "socket" in the TCP/IP world
-    struct tcp_pcb *pcb = tcp_new();
-    if (!pcb) {
-        printf("Error: Failed to allocate PCB.\n");
-        return;
-    }
-
-    // 2. Exchange string format IP address to binary format
-    ip4_addr_t server_addr;
-    if (!ip4addr_aton(SERVER_IP, &server_addr)) {
-        printf("Error: Invalid server IP address format.\n");
-        return;
-    }
-
-    // 3. Start connecting to the server
-    // When the connection is complete, connected_callback will be called
-    err_t err = tcp_connect(pcb, (ip_addr_t *)&server_addr, SERVER_PORT, connected_callback);
-    
-    if (err != ERR_OK) {
-        printf("Error: tcp_connect initiation failed (code: %d).\n", err);
-        tcp_abort(pcb); // Release the PCB immediately on failure
-    }
-}
-
 // Send moisture data to the HomeServer
 void haniwa_send_data(uint16_t moisture) {
+    // Try to reconnect if not connected
+    if (!is_connected) {
+        printf("Haniwa: Connection lost. Retrying...\n");
+        haniwa_connector_init();
+        return;
+    }
+
     // Store the latest moisture value to be sent when connected
     pending_moisture = moisture; 
 
-    // Reuse the connection logic to send data
-    haniwa_send_hello(); 
+    // Prepare the moisture data to send
+    char msg[32];
+    snprintf(msg, sizeof(msg), "MOISTURE:%u", pending_moisture);
+
+    // Send the moisture data to the server
+    tcp_write(haniwa_pcb, msg, strlen(msg), TCP_WRITE_FLAG_COPY);
+    tcp_output(haniwa_pcb);
 }
 
 // Check a new result from the HomeServer
