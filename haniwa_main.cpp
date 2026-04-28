@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "hardware/watchdog.h"
 #include "haniwa_main.hpp"
 #include "haniwa_monitor.hpp"
 #include "haniwa_connector.hpp"
@@ -40,6 +41,9 @@ void update_led_status(LEDStatus status) {
 int main() {
     // Initialize hardware itself
     stdio_init_all();
+    if (watchdog_caused_reboot()) {
+        printf("Haniwa: Rebooted by Watchdog! (Bus error or Hangup recovered)\n");
+    }
     sleep_ms(500);
 
     // Initialize software modules
@@ -62,9 +66,13 @@ int main() {
     // Initialize the LED status to SKIP (Green) at the start
     LEDStatus current_status = STATUS_SKIP;
     
+    // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
+    watchdog_enable(8000, 1);
+
     // Main loop
     while (true) {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
+        watchdog_update(); // Feed the watchdog to prevent reset
 
         // Listen for incoming messages and handle Wi-Fi events
         haniwa_poll_result();

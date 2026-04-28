@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "haniwa_monitor.hpp"
 #include "pico/stdlib.h"
+#include "hardware/watchdog.h"
 #include "hardware/gpio.h"
 #include "hardware/adc.h"
 
@@ -41,6 +42,7 @@ void haniwa_led_blink_red(int seconds) {
         sleep_ms(500);
         gpio_put(LED_RED, 0);
         sleep_ms(500);
+        watchdog_update(); // Feed the watchdog to prevent reset
     }
 }
 
@@ -50,6 +52,7 @@ void haniwa_led_blink_green(int seconds) {
         sleep_ms(500);
         gpio_put(LED_GREEN, 0);
         sleep_ms(500);
+        watchdog_update(); // Feed the watchdog to prevent reset
     }
 }
 
@@ -59,6 +62,7 @@ void haniwa_led_blink_blue(int seconds) {
         sleep_ms(500);
         gpio_put(LED_BLUE, 0);
         sleep_ms(500);
+        watchdog_update(); // Feed the watchdog to prevent reset
     }
 }
 
@@ -68,6 +72,7 @@ void haniwa_led_hf_blue(int seconds) {
         sleep_ms(100);
         gpio_put(LED_BLUE, 0);
         sleep_ms(100);
+        watchdog_update(); // Feed the watchdog to prevent reset
     }
 }
 void turn_off_all_leds(void) {
@@ -83,6 +88,7 @@ uint16_t haniwa_get_moisture() {
 
         // Read soil moisture result
         uint16_t rslt = adc_read();
+        watchdog_update(); // Feed the watchdog to prevent reset
 
         // VCC OFF immediately!
         gpio_put(SENSOR_VCC, 0);

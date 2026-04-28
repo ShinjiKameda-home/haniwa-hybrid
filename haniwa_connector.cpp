@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
+#include "hardware/watchdog.h"
 #include "lwip/tcp.h"
 #include "config.hpp"
 #include "haniwa_main.hpp"
@@ -180,7 +181,10 @@ bool haniwa_connector_init() {
 
         if (i < max_retries) {
             printf("Connection failed. Retrying in 10 seconds...\n");
-            sleep_ms(10000); 
+            for (int j = 0; j < 10; j++) {
+                sleep_ms(1000); 
+                watchdog_update(); // Feed the watchdog to prevent reset during the wait
+            }
         }
     }
 
@@ -223,9 +227,17 @@ bool haniwa_recv_result(LEDStatus* out_status) {
 void haniwa_poll_result() {
     cyw43_arch_poll(); // Listen for incoming messages and handle Wi-Fi events
     if (!is_connected) {
+        if (cyw43_wifi_link_status(&cyw43_state, CYW43_ITF_STA) < 0) {
+            printf("Wi-Fi hardware looks dead. Need hard reset...\n");
+        }
+
         uint32_t now = to_ms_since_boot(get_absolute_time());
         if (now - last_reconnect_attempt > RECONNECT_DELAY_MS) {
             last_reconnect_attempt = now;
+            if (haniwa_pcb != NULL) {
+                tcp_abort(haniwa_pcb); // Abort any existing PCB to ensure a clean state
+                haniwa_pcb = NULL;     // Clear the PCB reference
+            }
             printf("Connection lost. Retrying to connect to HomeServer...\n");
             haniwa_connector_init(); 
         }
