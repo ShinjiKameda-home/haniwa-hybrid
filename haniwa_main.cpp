@@ -7,7 +7,6 @@
 // Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
 uint32_t last_report_time = 0;
-LEDStatus current_status = STATUS_SKIP;
 
 void update_led_status(LEDStatus status) {
     // Turn off all LEDs before updating the status
@@ -50,7 +49,7 @@ int main() {
         return -1; 
     }
     
-    // Test Initialization
+    // Test LEDs and sensor, and send the first moisture value to the HomeServer
     haniwa_led_blink_red(1);
     haniwa_led_blink_green(1);
     haniwa_led_blink_blue(1);
@@ -59,6 +58,9 @@ int main() {
     printf("Current moisture: %u\n", val);
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
+    
+    // Initialize the LED status to SKIP (Green) at the start
+    LEDStatus current_status = STATUS_SKIP;
     
     // Main loop
     while (true) {

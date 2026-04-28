@@ -12,6 +12,8 @@ static uint16_t pending_moisture = 0;
 static LEDStatus latest_status = STATUS_SKIP;
 static bool result_received = false;
 static struct tcp_pcb *haniwa_pcb = NULL; // Global PCB for managing the connection
+static uint32_t last_reconnect_attempt = 0;
+const uint32_t RECONNECT_DELAY_MS = 10000; // 10 seconds
 
 // Parse the result string to determine the LED status (internal function)
 static LEDStatus parse_result_to_status(const char* data) {
@@ -90,6 +92,13 @@ static err_t connected_callback(void *arg, struct tcp_pcb *tpcb, err_t err) {
         is_connected = false;
     }
     return ERR_OK;
+}
+
+// Error Callback
+static void error_callback(void *arg, err_t err) {
+    printf("TCP connection error: %d\n", err);
+    is_connected = false;
+    haniwa_pcb = NULL; // Clear the PCB reference
 }
 
 // Check if the device is currently connected to the server
@@ -213,6 +222,12 @@ bool haniwa_recv_result(LEDStatus* out_status) {
 // Polling function to check for new results (can be called in the main loop)
 void haniwa_poll_result() {
     cyw43_arch_poll(); // Listen for incoming messages and handle Wi-Fi events
+    if (!is_connected) {
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if (now - last_reconnect_attempt > RECONNECT_DELAY_MS) {
+            last_reconnect_attempt = now;
+            printf("Connection lost. Retrying to connect to HomeServer...\n");
+            haniwa_connector_init(); 
+        }
+    }
 }
-
-

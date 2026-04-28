@@ -98,6 +98,7 @@ def handle_client(client_socket, address):
                     update_sticker(parts[0], int(parts[1]), MOISTURE_FILE)
                     current_status = read_decision()
                     client_socket.send(f"{current_status}".encode('utf-8'))
+                    print(f"Decision sent: Status{current_status}")          
             except BlockingIOError:
                 pass # No data received, just continue to check for updates            
             except UnicodeDecodeError:
@@ -111,7 +112,7 @@ def handle_client(client_socket, address):
                         break
                 current_status = read_decision()
                 client_socket.send(f"{current_status}".encode('utf-8'))
-                print(f"New event detected: Status{current_status}")            
+                print(f"Person detected: Status{current_status}")            
             was_person_present = is_person_present
             time.sleep(0.01)
 
