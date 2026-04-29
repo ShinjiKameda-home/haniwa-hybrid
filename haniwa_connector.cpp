@@ -175,11 +175,14 @@ bool haniwa_connector_init() {
         watchdog_update();
         
         if (state == 0) {
-            connect_to_server(); // Start the TCP connection process
-            watchdog_update();
-            printf("Connected. IP: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_default)));
-            is_connected = true;
-            return true;
+            if (connect_to_server()) {
+                watchdog_update();
+                printf("Connected. IP: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_default)));
+                is_connected = true;
+                return true;
+            } else {
+                printf("Wi-Fi connected but TCP failed.\n");
+            }
         }
 
         if (i < max_retries) {
