@@ -155,6 +155,7 @@ bool haniwa_connector_init() {
     }
 
     if (cyw43_arch_init()) {
+        watchdog_update();
         printf("Error: Wi-Fi chip initialization failed.\n");
         return false;
     }
@@ -165,15 +166,17 @@ bool haniwa_connector_init() {
 
     for (int i = 1; i <= max_retries; i++) {
         printf("Connection attempt %d/%d...\n", i, max_retries);
-        
+        watchdog_update();
+
         // Attempt to connect with a 10-second timeout
         int state = cyw43_arch_wifi_connect_timeout_ms(
-            WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 10000
+            WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 5000
         );
-
-        connect_to_server(); // Start the TCP connection process
+        watchdog_update();
         
         if (state == 0) {
+            connect_to_server(); // Start the TCP connection process
+            watchdog_update();
             printf("Connected. IP: %s\n", ip4addr_ntoa(netif_ip4_addr(netif_default)));
             is_connected = true;
             return true;
@@ -183,7 +186,7 @@ bool haniwa_connector_init() {
             printf("Connection failed. Retrying in 10 seconds...\n");
             for (int j = 0; j < 10; j++) {
                 sleep_ms(1000); 
-                watchdog_update(); // Feed the watchdog to prevent reset during the wait
+                watchdog_update();
             }
         }
     }
