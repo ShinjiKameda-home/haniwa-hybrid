@@ -160,7 +160,7 @@ bool haniwa_connector_init() {
         return false;
     }
     cyw43_arch_enable_sta_mode();
-    cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_PM2_POWERSAVE_MODE, 200, 1, 1, 10));
+    cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_PM2_POWERSAVE_MODE, 200, 1, 1, 5));
 
     const int max_retries = 3; // To acquire a brilliant military strategist...
 
