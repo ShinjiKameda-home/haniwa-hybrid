@@ -23,7 +23,7 @@ void haniwa_monitor_init() {
     for (uint led : leds) {
         gpio_init(led);
         gpio_set_dir(led, GPIO_OUT);
-        gpio_put(led, 0);
+        gpio_put(led, 1); // Start with all LEDs off (assuming active low)
     }
 
     // Initialize Soil Moisture Sensor pins
@@ -38,9 +38,9 @@ void haniwa_monitor_init() {
 
 void haniwa_led_blink_red(int seconds) {
     for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_RED, 1);
-        sleep_ms(500);
         gpio_put(LED_RED, 0);
+        sleep_ms(500);
+        gpio_put(LED_RED, 1);
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
@@ -48,9 +48,9 @@ void haniwa_led_blink_red(int seconds) {
 
 void haniwa_led_blink_green(int seconds) {
     for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_GREEN, 1);
-        sleep_ms(500);
         gpio_put(LED_GREEN, 0);
+        sleep_ms(500);
+        gpio_put(LED_GREEN, 1);
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
@@ -58,9 +58,9 @@ void haniwa_led_blink_green(int seconds) {
 
 void haniwa_led_blink_blue(int seconds) {
     for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_BLUE, 1);
-        sleep_ms(500);
         gpio_put(LED_BLUE, 0);
+        sleep_ms(500);
+        gpio_put(LED_BLUE, 1);
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
@@ -68,17 +68,18 @@ void haniwa_led_blink_blue(int seconds) {
 
 void haniwa_led_hf_blue(int seconds) {
     for (int i = 0; i < 5*seconds; i++) {
-        gpio_put(LED_BLUE, 1);
-        sleep_ms(100);
         gpio_put(LED_BLUE, 0);
+        sleep_ms(100);
+        gpio_put(LED_BLUE, 1);
         sleep_ms(100);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
 }
+
 void turn_off_all_leds(void) {
-    gpio_put(LED_RED, 0);
-    gpio_put(LED_GREEN, 0);
-    gpio_put(LED_BLUE, 0);
+    gpio_put(LED_RED, 1);
+    gpio_put(LED_GREEN, 1);
+    gpio_put(LED_BLUE, 1);
 }
 
 uint16_t haniwa_get_moisture() {
