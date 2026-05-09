@@ -7,17 +7,34 @@
 
 // Define pin numbers,
 //  depending on your microcontroller board
-const uint LED_RED   = 13;
-const uint LED_GREEN = 14;
-const uint LED_BLUE  = 15;
-const uint SENSOR_VCC = 22;
+const uint LED_SOURCE  = 17;
+const uint LED_RED     = 13;
+const uint LED_GREEN   = 14;
+const uint LED_BLUE    = 15;
+const uint SENSOR_VCC  = 22;
 
 // GP26 is ADC0, GP27 is ADC1, and GP28 is ADC2, 
 //  depending on your microcontroller board
 const uint SENSOR_ADC_NUM = 0;
 const uint SENSOR_AOUT = 26 + SENSOR_ADC_NUM;
 
+void turn_off_all_leds(void) {
+    gpio_put(LED_SOURCE, 0);
+    gpio_put(LED_RED, 1);
+    gpio_put(LED_GREEN, 1);
+    gpio_put(LED_BLUE, 1);
+}
+
+void ready_all_leds(void) {
+    gpio_put(LED_SOURCE, 1);
+    sleep_ms(20);
+}
+
 void haniwa_monitor_init() {
+    // Initialize LED source pin
+    gpio_init(LED_SOURCE);
+    gpio_set_dir(LED_SOURCE, GPIO_OUT);
+    gpio_put(LED_SOURCE, 0); // Start with all LEDs off (assuming active low)
     // Initialize LED pins
     const uint leds[] = {LED_RED, LED_GREEN, LED_BLUE};
     for (uint led : leds) {
@@ -37,6 +54,7 @@ void haniwa_monitor_init() {
 }
 
 void haniwa_led_blink_red(int seconds) {
+    ready_all_leds();
     for (int i = 0; i < seconds; i++) {
         gpio_put(LED_RED, 0);
         sleep_ms(500);
@@ -44,9 +62,11 @@ void haniwa_led_blink_red(int seconds) {
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
+    turn_off_all_leds();
 }
 
 void haniwa_led_blink_green(int seconds) {
+    ready_all_leds();
     for (int i = 0; i < seconds; i++) {
         gpio_put(LED_GREEN, 0);
         sleep_ms(500);
@@ -54,9 +74,11 @@ void haniwa_led_blink_green(int seconds) {
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
+    turn_off_all_leds();
 }
 
 void haniwa_led_blink_blue(int seconds) {
+    ready_all_leds();
     for (int i = 0; i < seconds; i++) {
         gpio_put(LED_BLUE, 0);
         sleep_ms(500);
@@ -64,9 +86,11 @@ void haniwa_led_blink_blue(int seconds) {
         sleep_ms(500);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
+    turn_off_all_leds();
 }
 
 void haniwa_led_hf_blue(int seconds) {
+    ready_all_leds();
     for (int i = 0; i < 5*seconds; i++) {
         gpio_put(LED_BLUE, 0);
         sleep_ms(100);
@@ -74,12 +98,7 @@ void haniwa_led_hf_blue(int seconds) {
         sleep_ms(100);
         watchdog_update(); // Feed the watchdog to prevent reset
     }
-}
-
-void turn_off_all_leds(void) {
-    gpio_put(LED_RED, 1);
-    gpio_put(LED_GREEN, 1);
-    gpio_put(LED_BLUE, 1);
+    turn_off_all_leds();
 }
 
 uint16_t haniwa_get_moisture() {
