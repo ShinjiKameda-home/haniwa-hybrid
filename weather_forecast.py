@@ -176,16 +176,22 @@ def get_weather(force_report=False):
 
 def init_shm():
     """Initialize shared memory for person detection."""
+    shm = None
     try:
         shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=SHM_SIZE)
-        os.chmod(f"/dev/shm/" + SHM_NAME, 0o666)
-        shm.buf[0] = 0  # Initialize Person presence to 0 (NOT detected)
-        shm.buf[1] = 0  # Initialize Watering decision to 0 (SKIP)
-        send_telegram("Shared Memory initialized.")
         print(f"Shared memory '{SHM_NAME}' created.")
     except FileExistsError:
-        shm = shared_memory.SharedMemory(name=SHM_NAME)
-        print(f"Shared memory '{SHM_NAME}' already exists, reusing it.")
+        existing_shm = shared_memory.SharedMemory(name=SHM_NAME)
+        print(f"Shared memory '{SHM_NAME}' already exists, unlinking and recreating...")
+        existing_shm.close()
+        existing_shm.unlink()
+        shm = shared_memory.SharedMemory(name=SHM_NAME, create=True, size=SHM_SIZE)
+        print(f"Shared memory '{SHM_NAME}' recreated successfully.")
+    os.chmod(f"/dev/shm/" + SHM_NAME, 0o666)
+    shm.buf[0] = 0  # Initialize Person presence to 0 (NOT detected)
+    shm.buf[1] = 0  # Initialize Watering decision to 0 (SKIP)
+    send_telegram("Shared Memory initialized.")
+    print("Shared memory initialized and ready for use.")
     return shm
 
 def main_loop():
