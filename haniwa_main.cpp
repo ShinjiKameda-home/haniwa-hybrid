@@ -4,10 +4,13 @@
 #include "haniwa_main.hpp"
 #include "haniwa_monitor.hpp"
 #include "haniwa_connector.hpp"
+#include "pico/cyw43_arch.h"
 
-// Constants
+// Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
 uint32_t last_report_time = 0;
+uint32_t loop_count = 0;
+bool heartbeat_led_state = false;
 
 void update_led_status(LEDStatus status) {
     // Turn off all LEDs before updating the status
@@ -96,6 +99,14 @@ int main() {
 
             // Send moisture value to the HomeServer
             haniwa_send_data(val);
+        }
+
+        // Heartbeat LED to indicate the system is alive
+        loop_count++;
+        if (loop_count >= 5) {
+            loop_count = 0;
+            heartbeat_led_state = !heartbeat_led_state;
+            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, heartbeat_led_state);
         }
 
         // Take interval for preventing CPU overheat and unnecessary network traffic
