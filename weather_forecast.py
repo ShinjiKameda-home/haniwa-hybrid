@@ -82,6 +82,17 @@ def make_decision() -> int:
         print(f"Decision Error: {e}")
         return 3  # ERROR
 
+def decision_to_advice(decision) -> str:
+    """Convert decision code to human-readable advice."""
+    if decision == 0:
+        return "SKIP"
+    elif decision == 1:
+        return "GO"
+    elif decision == 2:
+        return "TOO_MUCH"
+    else:
+        return "ERROR"
+
 def save_to_log(data_row):
     """Append observation data to a local CSV file for future accuracy analysis."""
     file_exists = os.path.isfile(LOG_FILE)
@@ -159,7 +170,8 @@ def get_weather(force_report=False):
 
     # --- ACTION 3: Human Report via Telegram (Only at 6:30 AM JST, or just restarted) ---
     if now.hour == 6 or force_report:
-        advice = "SKIP Watering" if not water_perm else "GO Watering"
+        decision = make_decision()
+        watering_advice = decision_to_advice(decision)
         wind_alert = f"\nWARNING: Strong Wind or Gust!" if not bird_perm else ""
 
         message = (
@@ -167,7 +179,7 @@ def get_weather(force_report=False):
             f"Status: {weather_main}\n"
             f"Temp: {temp}C / Humid: {humidity}%\n"
             f"Wind: {wind_speed}m/s / Gust: {wind_gust}m/s {wind_alert}\n"
-            f"Watering: {advice}"
+            f"Watering: {watering_advice}"
         )
         send_telegram(message)
     else:
@@ -204,22 +216,15 @@ def main_loop():
 
     while True:
         now = datetime.datetime.now()
+        decision = make_decision()    # Make a decision for watering based on weather data and soil moisture
+        shm.buf[1] = decision         # Set a flag for Watering decision
 
         # Make a decision of watering when a person is detected
         if shm.buf[0] == 1:
             is_present = bool(shm.buf[0])
-            send_telegram(f"Person detected in the garden!: {is_present}")
-            decision = make_decision()  # Make a decision for watering based on weather data and soil moisture
-            shm.buf[1] = decision              # Set a flag for Watering decision
+            watering_advice = decision_to_advice(decision)
             # Send Telegram notification based on the decision
-            if decision == 0:
-                send_telegram("Watering: SKIP (Green LED)")
-            elif decision == 1:
-                send_telegram("Watering: GO (Red LED)")
-            elif decision == 2:
-                send_telegram("Watering: TOO_MUCH (Blue LED)")
-            else:
-                send_telegram("Error: Unable to make a decision")
+            send_telegram(f"Person detected in the garden!\nWatering: {watering_advice}")
             shm.buf[0] = 0              # Clear the flag after processing
 
         # Acquire weather data every 3 hours
