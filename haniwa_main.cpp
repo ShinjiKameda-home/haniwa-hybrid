@@ -103,14 +103,14 @@ int main() {
 
         // Heartbeat LED to indicate the system is alive
         loop_count++;
-        if (loop_count >= 5) {
+        if (loop_count >= 2) {
             loop_count = 0;
             heartbeat_led_state = !heartbeat_led_state;
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, heartbeat_led_state);
         }
 
         // Take interval for preventing CPU overheat and unnecessary network traffic
-        sleep_ms(200);
+        sleep_ms(500);
     }
 
     return 0;
