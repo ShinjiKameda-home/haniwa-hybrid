@@ -3,6 +3,8 @@
 #include "pico/cyw43_arch.h"
 #include "hardware/watchdog.h"
 #include "lwip/tcp.h"
+#include "lwip/ip_addr.h"
+#include "lwip/dns.h"
 #include "config.hpp"
 #include "haniwa_main.hpp"
 #include "haniwa_connector.hpp"
@@ -15,6 +17,27 @@ static bool result_received = false;
 static struct tcp_pcb *haniwa_pcb = NULL; // Global PCB for managing the connection
 static uint32_t last_reconnect_attempt = 0;
 const uint32_t RECONNECT_DELAY_MS = 10000; // 10 seconds
+
+// Setup static IP address for the Pico (HANIWA)
+void setup_static_ip() {
+    ip_addr_t ip, mask, gw, dns_server;
+    ipaddr_aton(STATIC_IP, &ip);
+    ipaddr_aton(NETMASK, &mask);
+    ipaddr_aton(GATEWAY, &gw);
+    ipaddr_aton(DNS_SERVER, &dns_server);
+    // Configure the netif with the static IP settings
+    struct netif *netif = &cyw43_state.netif[CYW43_ITF_STA];
+    // Stop DHCP
+    #if LWIP_DHCP
+    dhcp_stop(netif);
+    #endif
+    // Set static IP configuration
+    netif_set_addr(netif, &ip, &mask, &gw);
+    // Optionally set DNS server if your application uses it
+    dns_setserver(0, (const ip_addr_t *)&dns_server);
+    printf("[HaniwaConnector] Static IP applied: %s\n", STATIC_IP);
+}
+
 
 // Parse the result string to determine the LED status (internal function)
 static LEDStatus parse_result_to_status(const char* data) {
@@ -163,7 +186,9 @@ bool haniwa_connector_init() {
     cyw43_wifi_pm(&cyw43_state, cyw43_pm_value(CYW43_PM2_POWERSAVE_MODE, 200, 1, 1, 5));
     watchdog_update();
 
-    const int max_retries = 3; // To acquire a brilliant military strategist...
+    setup_static_ip(); // Apply static IP configuration
+    
+    const int max_retries = 20;
 
     for (int i = 1; i <= max_retries; i++) {
         printf("Connection attempt %d/%d...\n", i, max_retries);

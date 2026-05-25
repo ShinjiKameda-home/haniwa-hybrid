@@ -47,13 +47,21 @@ int main() {
     if (watchdog_caused_reboot()) {
         printf("Haniwa: Rebooted by Watchdog! (Bus error or Hangup recovered)\n");
     }
-    sleep_ms(500);
+    sleep_ms(100);
 
     // Initialize software modules
     haniwa_monitor_init();
     if (!haniwa_connector_init()) {
         printf("Haniwa Connector: The meeting has been rejected.\n");
         return -1; 
+    }
+
+    // Initialize Wi-Fi and TCP connection to the HomeServer
+    for (int i = 0; i < 5; i++) {
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);  // Turn on the Wi-Fi LED to indicate connection attempt
+        sleep_ms(100);
+        cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);  // Turn off the Wi-Fi LED
+        sleep_ms(100);
     }
     
     // Test LEDs and sensor, and send the first moisture value to the HomeServer
