@@ -79,31 +79,57 @@ def update_sticker(label, value, file_path):
 
 def handle_client(client_socket, address):
     """Handle client connection"""
-    # Set a timeout for client operations to prevent hanging connections (16 minutes)
-    client_socket.settimeout(960.0)
-    client_socket.setblocking(False)
+    # Set a timeout for client operations to prevent hanging connections
+    client_socket.settimeout(1.0)
+
+    # Optionally, set the socket to non-blocking mode if you want to handle multiple clients more efficiently
+    # client_socket.setblocking(False)
+
     was_person_present = False  # To track the last sent status and avoid redundant sends
+    recv_buffer = ""  # Buffer to accumulate received data
     print(f"Client connected: {address}")
 
     try:
         while True:
             try:    
-                data = client_socket.recv(1024)
-                if not data: break
+                try:
+                    data = client_socket.recv(1024)
+                except ConnectionResetError:
+                    print("Haniwa disconnected unexpectedly, waiting for reconnection...")
+                    break  # Exit the loop to end the thread, allowing the main server to accept new connections
 
-                message = data.decode('utf-8').strip()
-                print(f"Received: {message}")
-                if ':' in message:
-                    parts = message.split(':')
-                    update_sticker(parts[0], int(parts[1]), MOISTURE_FILE)
-                    current_status = read_decision()
-                    client_socket.send(f"{current_status}".encode('utf-8'))
-                    print(f"Decision sent: Status{current_status}")          
-            except BlockingIOError:
-                pass # No data received, just continue to check for updates            
+                if not data:
+                    break
+
+                recv_buffer += data.decode('utf-8', errors='ignore')
+
+                while "\n" in recv_buffer:
+                    line, recv_buffer = recv_buffer.split("\n", 1)
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    print(f"Received: {line}")
+
+                    if ':' in line:
+                        parts = line.split(':')
+                        try:
+                            label = parts[0].strip()
+                            value = int(parts[1].strip())
+                            update_sticker(label, value, MOISTURE_FILE)
+                            current_status = read_decision()
+                            client_socket.send(f"{current_status}\n".encode('utf-8'))
+                            print(f"Decision sent: Status{current_status}")
+                        except ValueError:
+                            print(f"Invalid data format received: {line}")
+            
+            # Handle socket timeout and decoding errors gracefully, allowing the loop to continue checking shared memory
+            except socket.timeout:
+                pass
             except UnicodeDecodeError:
-                pass  # Ignore decode errors and continue
+                pass
   
+            # Check the person presence status from shared memory
             is_person_present = (shm.buf[0] == 1)
             if is_person_present and not was_person_present:
                 for _ in range(50):
@@ -111,17 +137,17 @@ def handle_client(client_socket, address):
                     if shm.buf[0] == 0: # wather_forecast updates the status to 0, when the status is completely updated.
                         break
                 current_status = read_decision()
-                client_socket.send(f"{current_status}".encode('utf-8'))
+                client_socket.send(f"{current_status}\n".encode('utf-8'))
                 print(f"Person detected: Status{current_status}")            
             was_person_present = is_person_present
-            time.sleep(0.01)
+
+            time.sleep(0.02)
 
     except Exception as e:
         print(f"Error processing client message: {e}")
     finally:
         client_socket.close()
-        print(f"Client disconnected: {address}")    
-
+        print(f"Client disconnected: {address}")
 
 def main():
     global shm
