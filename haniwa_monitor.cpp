@@ -18,6 +18,17 @@ const uint SENSOR_VCC  = 22;
 const uint SENSOR_ADC_NUM = 0;
 const uint SENSOR_AOUT = 26 + SENSOR_ADC_NUM;
 
+// Additional variables
+static bool     p_target_r = false;
+static bool     p_target_g = false;
+static bool     p_target_b = false;
+static uint32_t p_interval_ms = 0;
+static int      p_remaining_counts = 0;
+static uint32_t p_last_toggle_time = 0;
+static bool     p_led_is_on = false;
+static bool     p_is_running = false;
+
+// Turn off all LEDs
 void turn_off_all_leds(void) {
     gpio_put(LED_SOURCE, 0);
     gpio_put(LED_RED, 1);
@@ -25,11 +36,13 @@ void turn_off_all_leds(void) {
     gpio_put(LED_BLUE, 1);
 }
 
+// Ready LEDs by turning on the LED source pin and waiting for a short time to stabilize
 void ready_all_leds(void) {
     gpio_put(LED_SOURCE, 1);
     sleep_ms(20);
 }
 
+// Initialize hardware and ADC for soil moisture sensor
 void haniwa_monitor_init() {
     // Initialize LED source pin
     gpio_init(LED_SOURCE);
@@ -53,58 +66,68 @@ void haniwa_monitor_init() {
     adc_select_input(SENSOR_ADC_NUM);
 }
 
-void haniwa_led_blink_red(int seconds) {
-    ready_all_leds();
-    for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_RED, 0);
-        sleep_ms(500);
-        gpio_put(LED_RED, 1);
-        sleep_ms(500);
-        watchdog_update(); // Feed the watchdog to prevent reset
-    }
+// Start blinking LEDs with the specified colors, interval, and count
+void start_led_blink(bool r, bool g, bool b, uint32_t interval_ms, int count) {
     turn_off_all_leds();
+
+    p_target_r = r;
+    p_target_g = g;
+    p_target_b = b;
+    p_interval_ms = interval_ms;
+    p_remaining_counts = count * 2; // Each cycle has an ON and OFF state
+
+    p_last_toggle_time = to_ms_since_boot(get_absolute_time());    
+    p_led_is_on = false; // Start with LEDs off
+    p_is_running = true;
+
+    // Start with the first toggle immediately to turn on the LEDs
+    ready_all_leds();
+    if (p_target_r) gpio_put(LED_RED, 0);
+    if (p_target_g) gpio_put(LED_GREEN, 0);
+    if (p_target_b) gpio_put(LED_BLUE, 0);
+    p_led_is_on = true;
+    p_remaining_counts--;
 }
 
-void haniwa_led_blink_green(int seconds) {
-    ready_all_leds();
-    for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_GREEN, 0);
-        sleep_ms(500);
-        gpio_put(LED_GREEN, 1);
-        sleep_ms(500);
-        watchdog_update(); // Feed the watchdog to prevent reset
+// Monitor time called from the main loop to handle LED blinking
+void poll_led_blink(void) {
+    if (!p_is_running) return;
+
+    uint32_t now = to_ms_since_boot(get_absolute_time());
+
+    if (now - p_last_toggle_time >= p_interval_ms) {
+        p_last_toggle_time = now;
+
+        if (p_remaining_counts <= 0) {
+            turn_off_all_leds();
+            p_is_running = false;
+            return;
+        }
+
+        if (p_led_is_on) {
+            // Turn off LEDs
+            if (p_target_r) gpio_put(LED_RED, 1);
+            if (p_target_g) gpio_put(LED_GREEN, 1);
+            if (p_target_b) gpio_put(LED_BLUE, 1);
+            p_led_is_on = false;
+        } else {
+            // Turn on LEDs
+            ready_all_leds();
+            if (p_target_r) gpio_put(LED_RED, 0);
+            if (p_target_g) gpio_put(LED_GREEN, 0);
+            if (p_target_b) gpio_put(LED_BLUE, 0);
+            p_led_is_on = true;
+        }
+
+        p_remaining_counts--;
     }
-    turn_off_all_leds();
 }
 
-void haniwa_led_blink_blue(int seconds) {
-    ready_all_leds();
-    for (int i = 0; i < seconds; i++) {
-        gpio_put(LED_BLUE, 0);
-        sleep_ms(500);
-        gpio_put(LED_BLUE, 1);
-        sleep_ms(500);
-        watchdog_update(); // Feed the watchdog to prevent reset
-    }
-    turn_off_all_leds();
-}
-
-void haniwa_led_hf_blue(int seconds) {
-    ready_all_leds();
-    for (int i = 0; i < 5*seconds; i++) {
-        gpio_put(LED_BLUE, 0);
-        sleep_ms(100);
-        gpio_put(LED_BLUE, 1);
-        sleep_ms(100);
-        watchdog_update(); // Feed the watchdog to prevent reset
-    }
-    turn_off_all_leds();
-}
-
-uint16_t haniwa_get_moisture() {
+// Get soil moisture value from the sensor
+uint16_t get_moisture() {
         // VCC ON wait stabilizing sensor
         gpio_put(SENSOR_VCC, 1);
-        sleep_ms(50);
+        sleep_ms(20);
 
         // Read soil moisture result
         uint16_t rslt = adc_read();
@@ -114,4 +137,20 @@ uint16_t haniwa_get_moisture() {
         gpio_put(SENSOR_VCC, 0);
 
         return rslt;
+}
+
+// Turn on all LEDs
+void haniwa_flash_on(void) {
+    ready_all_leds();
+    gpio_put(LED_RED, 0);   // ON (Active Low)
+    gpio_put(LED_GREEN, 0); // ON
+    gpio_put(LED_BLUE, 0);  // ON
+}
+
+// Turn off all LEDs
+void haniwa_flash_off(void) {
+    gpio_put(LED_RED, 1);   // OFF
+    gpio_put(LED_GREEN, 1); // OFF
+    gpio_put(LED_BLUE, 1);  // OFF
+    turn_off_all_leds();
 }

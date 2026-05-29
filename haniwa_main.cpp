@@ -8,7 +8,11 @@
 
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
+const uint32_t FLASH_INTERVAL_MS = 30 * 1000; // Flash LEDs every 30 seconds
 uint32_t last_report_time = 0;
+uint32_t last_flash_time = 0;
+uint32_t flashing_start_time = 0;
+bool flashing_led_state = false;
 uint32_t loop_count = 0;
 bool heartbeat_led_state = false;
 
@@ -18,23 +22,23 @@ void update_led_status(LEDStatus status) {
 
     switch(status) {
         case STATUS_GO:
-            haniwa_led_blink_red(10);
+            start_led_blink(true, false, false, 500, 10); // Blink Red for GO watering
             printf("Haniwa: Red Alert! GO Watering!\n");
             break;
             
         case STATUS_TOO_MUCH:
-            haniwa_led_blink_blue(10);
+            start_led_blink(false, false, true, 500, 10); // Blink Blue for TOO_MUCH water
             printf("Haniwa: Blue Alert! TOO_MUCH water.\n");
             break;
 
         case STATUS_ERROR:
-            haniwa_led_hf_blue(10);
+            start_led_blink(false, false, true, 100, 50); // Fast Blink Blue for ERROR
             printf("Haniwa: Blue Alert!! ERROR occurred.\n");
             break;
 
         case STATUS_SKIP:
         default:
-            haniwa_led_blink_green(10);
+            start_led_blink(false, true, false, 500, 10); // Blink Green for SKIP water
             printf("Haniwa: All Green. SKIP Watering.\n");
             break;
     }
@@ -64,16 +68,12 @@ int main() {
         sleep_ms(100);
     }
     
-    // Test LEDs and sensor, and send the first moisture value to the HomeServer
-    haniwa_led_blink_red(1);
-    haniwa_led_blink_green(1);
-    haniwa_led_blink_blue(1);
-    haniwa_led_hf_blue(1);
-    uint16_t val = haniwa_get_moisture();
+    // Test sensor, and send the first moisture value to the HomeServer
+    uint16_t val = get_moisture();
     printf("Current moisture: %u\n", val);
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
-    
+    last_flash_time = to_ms_since_boot(get_absolute_time());
     // Initialize the LED status to SKIP (Green) at the start
     LEDStatus current_status = STATUS_SKIP;
     
@@ -85,6 +85,9 @@ int main() {
         uint32_t current_time = to_ms_since_boot(get_absolute_time());
         watchdog_update(); // Feed the watchdog to prevent reset
 
+        // Polling LED blinking
+        poll_led_blink();
+
         // Listen for incoming messages and handle Wi-Fi events
         haniwa_poll_result();
 
@@ -94,31 +97,39 @@ int main() {
             printf("Haniwa: Updated LED status based on the decision.\n");
         }
 
+        // Flash LEDs to indicate keeping alive
+        if (!flashing_led_state) {
+            if (current_time - last_flash_time >= FLASH_INTERVAL_MS) {
+                last_flash_time = current_time;
+                flashing_start_time = current_time;
+                flashing_led_state = true;
+                haniwa_flash_on();                
+            }
+        } else {
+            if (current_time - flashing_start_time >= 500) {
+                flashing_led_state = false;
+                haniwa_flash_off();
+            }
+        }        
+
         // Check if it's time to report moisture to the HomeServer
         if (current_time - last_report_time >= REPORT_INTERVAL_MS) {
-            // Update the last report time
             last_report_time = current_time;
-
-            // Get moisture value from the sensor
-            val = haniwa_get_moisture();
-
-            // Print to the PC Terminal
+            val = get_moisture();
             printf("Current moisture: %u\n", val);
-
-            // Send moisture value to the HomeServer
             haniwa_send_data(val);
         }
 
         // Heartbeat LED to indicate the system is alive
         loop_count++;
-        if (loop_count >= 2) {
+        if (loop_count >= 50) {
             loop_count = 0;
             heartbeat_led_state = !heartbeat_led_state;
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, heartbeat_led_state);
         }
 
         // Take interval for preventing CPU overheat and unnecessary network traffic
-        sleep_ms(500);
+        sleep_ms(10);
     }
 
     return 0;

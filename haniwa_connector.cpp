@@ -269,8 +269,12 @@ void haniwa_send_data(uint16_t moisture) {
     // Try to reconnect if not connected
     if (!is_connected) {
         printf("Haniwa: Connection lost. Retrying...\n");
-        haniwa_connector_init();
-        return;
+        if (!haniwa_connector_init()) {
+            printf("Haniwa: Reconnection failed. Will retry later.\n");
+            return; // If reconnection fails, just return and wait for the next attempt
+        }
+        printf("Haniwa: Reconnected successfully. Sending data...\n");
+        // After reconnection, we can proceed to send the data below without needing to prepare it again
     }
 
     // Store the latest moisture value to be sent when connected

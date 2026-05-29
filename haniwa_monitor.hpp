@@ -8,15 +8,17 @@
 void haniwa_monitor_init(void);
 
 // Blink LEDs
-void haniwa_led_blink_red(int seconds);
-void haniwa_led_blink_green(int seconds);
-void haniwa_led_blink_blue(int seconds);
-void haniwa_led_hf_blue(int seconds);
+void start_led_blink(bool r, bool g, bool b, uint32_t interval_ms, int count);
+void poll_led_blink(void);
 
 // Turn off all LEDs
 void turn_off_all_leds(void);
 
 // Get soil moisture
-uint16_t haniwa_get_moisture(void);
+uint16_t get_moisture(void);
+
+// Flash all LEDs to indicate an error
+void haniwa_flash_on(void);
+void haniwa_flash_off(void);
 
 #endif
