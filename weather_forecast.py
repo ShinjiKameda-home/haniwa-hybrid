@@ -69,7 +69,7 @@ def make_decision() -> int:
             if len(rows) >= 3 and rows[-3]['weather'] == 'Rain':
                 rain_slots += 1
             # Predicted rain intensity (Future)
-            rain_slots += int(rows[-1]['rain_slots_48h'])
+            rain_slots += int(rows[-1]['rain_slots_24h'])
         # 3. Final Decision Logic
         #    Skip if accumulated rain score is high or soil is already moist
         if rain_slots > RAIN_SLOTS_THRESHOLD and cur_moisture > MOISTURE_THRESHOLD:
@@ -99,7 +99,7 @@ def save_to_log(data_row):
     with open(LOG_FILE, 'a', newline='') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["timestamp", "wind_speed", "wind_gust", "weather", "temp", "humidity", "rain_slots_48h"])
+            writer.writerow(["timestamp", "wind_speed", "wind_gust", "weather", "temp", "humidity", "rain_slots_24h"])
         writer.writerow(data_row)
         # Flush the cache file to ensure the latest weather data is available
         f.flush()
@@ -132,8 +132,8 @@ def get_weather(force_report=False):
     next_wind_speed = upcoming['wind'].get('speed', 0)
     next_wind_gust = upcoming['wind'].get('gust', next_wind_speed)
 
-    # Count rain slots in the next 48 hours (16 slots of 3-hour intervals)
-    rain_slots = sum(1 for slot in data['list'][:16] if 'Rain' in [w['main'] for w in slot['weather']])
+    # Count rain slots in the next 24 hours (8 slots of 3-hour intervals)
+    rain_slots = sum(1 for slot in data['list'][:8] if 'Rain' in [w['main'] for w in slot['weather']])
 
     # --- ACTION 1: Log data to CSV for accuracy verification ---
     save_to_log([
@@ -158,7 +158,7 @@ def get_weather(force_report=False):
     status = {
         "wind_speed": wind_speed,
         "wind_gust": wind_gust,
-        "rain_slots_48h": rain_slots,
+        "rain_slots_24h": rain_slots,
         "birdwatching": bird_perm,
         "watering": water_perm,
         "updated_at": now.strftime('%Y-%m-%d %H:%M:%S')
