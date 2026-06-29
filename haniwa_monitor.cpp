@@ -147,6 +147,27 @@ void haniwa_flash_on(void) {
     gpio_put(LED_BLUE, 0);  // ON
 }
 
+// Turn on an LED based on the current status
+void haniwa_indication_on(LEDStatus status) {
+    ready_all_leds();
+    switch(status) {
+        case STATUS_GO:
+            gpio_put(LED_RED, 0);   // ON (Active Low)
+            break;
+        case STATUS_TOO_MUCH:
+            gpio_put(LED_BLUE, 0);  // ON
+            break;
+        case STATUS_ERROR:
+            gpio_put(LED_RED, 0);   // ON (Active Low)
+            gpio_put(LED_GREEN, 0); // ON
+            break;
+        case STATUS_SKIP:
+        default:
+            gpio_put(LED_GREEN, 0); // ON
+            break;
+    }
+}
+
 // Turn off all LEDs
 void haniwa_flash_off(void) {
     gpio_put(LED_RED, 1);   // OFF

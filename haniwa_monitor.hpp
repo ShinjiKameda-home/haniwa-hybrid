@@ -4,6 +4,9 @@
 // Use C99 standard types
 #include <stdint.h>
 
+// Define LED status enumeration
+#include "haniwa_main.hpp"
+
 // Initialize
 void haniwa_monitor_init(void);
 
@@ -19,6 +22,7 @@ uint16_t get_moisture(void);
 
 // Flash all LEDs to indicate an error
 void haniwa_flash_on(void);
+void haniwa_indication_on(LEDStatus status);
 void haniwa_flash_off(void);
 
 #endif

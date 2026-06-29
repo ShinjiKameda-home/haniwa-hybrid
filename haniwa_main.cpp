@@ -8,7 +8,7 @@
 
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
-const uint32_t FLASH_INTERVAL_MS = 30 * 1000; // Flash LEDs every 30 seconds
+const uint32_t FLASH_INTERVAL_MS = 20 * 1000; // Flash LEDs every 20 seconds
 uint32_t last_report_time = 0;
 uint32_t last_flash_time = 0;
 uint32_t flashing_start_time = 0;
@@ -103,7 +103,8 @@ int main() {
                 last_flash_time = current_time;
                 flashing_start_time = current_time;
                 flashing_led_state = true;
-                haniwa_flash_on();                
+                // haniwa_flash_on(); // Flash all LEDs was cancelled instead of indicating the current status
+                haniwa_indication_on(current_status);                
             }
         } else {
             if (current_time - flashing_start_time >= 500) {
@@ -122,7 +123,7 @@ int main() {
 
         // Heartbeat LED to indicate the system is alive
         loop_count++;
-        if (loop_count >= 50) {
+        if (loop_count >= 100) {
             loop_count = 0;
             heartbeat_led_state = !heartbeat_led_state;
             cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, heartbeat_led_state);
