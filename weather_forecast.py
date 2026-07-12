@@ -23,7 +23,9 @@ RAIN_SLOTS_THRESHOLD = 2  # Threshold for deciding watering based on rain foreca
 SHM_NAME = "memories_of_haniwa_garden"
 SHM_SIZE = 8  # Size in bytes for shared memory (enough for a few flags or small data)
 MOISTURE_FILE = "../soil_moisture.json"
-MOISTURE_THRESHOLD = 30  # Example threshold for dry soil
+MOISTURE_THRESHOLD = 200  # Threshold for dry soil
+MOISTURE_LIMIT = 3500     # Threshold for overly wet soil
+CURRENT_MOISTURE = 4095   # Placeholder for current soil moisture value
 
 def send_telegram(text):
     """Send a notification message via Telegram Bot API."""
@@ -48,12 +50,16 @@ def make_decision() -> int:
         2: TOO_MUCH  (Blue LED) - Sufficient moisture and more rain predicted.
         3: ERROR (Blue LED)     - System error or data missing, high frequency of blinking.
     """
+    
+    # use global variable to store the current soil moisture value
+    global CURRENT_MOISTURE
+
     try:
         # 1. Fetch real-time soil moisture from the local sensor data
         with open(MOISTURE_FILE, 'r') as f:
             moisture_data = json.load(f)
             # Default to 100 (wet) to prevent accidental over-watering if file is corrupt
-            cur_moisture = int(moisture_data.get("MOISTURE", 100))
+            CURRENT_MOISTURE = int(moisture_data.get("MOISTURE", 100))
         # 2. Analyze weather trends: past, present, and future forecast
         with open(LOG_FILE, 'r') as f:
             rows = list(csv.DictReader(f))
@@ -71,10 +77,11 @@ def make_decision() -> int:
             # Predicted rain intensity (Future)
             rain_slots += int(rows[-1]['rain_slots_24h'])
         # 3. Final Decision Logic
-        #    Skip if accumulated rain score is high or soil is already moist
-        if rain_slots > RAIN_SLOTS_THRESHOLD and cur_moisture > MOISTURE_THRESHOLD:
+        if CURRENT_MOISTURE >= MOISTURE_LIMIT:
+            return 3  # ERROR
+        elif rain_slots > RAIN_SLOTS_THRESHOLD and CURRENT_MOISTURE > MOISTURE_THRESHOLD:
             return 2  # TOO_MUCH
-        elif rain_slots > RAIN_SLOTS_THRESHOLD or cur_moisture > MOISTURE_THRESHOLD:
+        elif rain_slots > RAIN_SLOTS_THRESHOLD or CURRENT_MOISTURE > MOISTURE_THRESHOLD:
             return 0  # SKIP
         else:
             return 1  # GO
@@ -99,7 +106,7 @@ def save_to_log(data_row):
     with open(LOG_FILE, 'a', newline='') as f:
         writer = csv.writer(f)
         if not file_exists:
-            writer.writerow(["timestamp", "wind_speed", "wind_gust", "weather", "temp", "humidity", "rain_slots_24h"])
+            writer.writerow(["timestamp", "wind_speed", "wind_gust", "weather", "temp", "humidity", "rain_slots_24h", "soil_moisture"])
         writer.writerow(data_row)
         # Flush the cache file to ensure the latest weather data is available
         f.flush()
@@ -117,6 +124,10 @@ def get_weather(force_report=False):
     except Exception as e:
         print(f"Connection Error: {e}")
         return
+    
+    # make_decision() will read the soil moisture from the local sensor data
+    make_decision()  # Ensure the latest soil moisture is considered
+    global CURRENT_MOISTURE  # Ensure we use the updated soil moisture value
 
     # Extract current weather parameters
     current = data['list'][0]
@@ -125,6 +136,7 @@ def get_weather(force_report=False):
     weather_main = current['weather'][0]['main']
     temp = current['main']['temp']
     humidity = current['main']['humidity']
+    soil_moisture = CURRENT_MOISTURE
     now = datetime.datetime.now()
 
     # Extract next weather parameters (after 3 hours)
@@ -143,7 +155,8 @@ def get_weather(force_report=False):
         weather_main,
         temp,
         humidity,
-        rain_slots
+        rain_slots,
+        soil_moisture
     ])
 
     # Logic for System Permissions
@@ -159,6 +172,7 @@ def get_weather(force_report=False):
         "wind_speed": wind_speed,
         "wind_gust": wind_gust,
         "rain_slots_24h": rain_slots,
+        "soil_moisture": soil_moisture,
         "birdwatching": bird_perm,
         "watering": water_perm,
         "updated_at": now.strftime('%Y-%m-%d %H:%M:%S')
@@ -179,6 +193,7 @@ def get_weather(force_report=False):
             f"Status: {weather_main}\n"
             f"Temp: {temp}C / Humid: {humidity}%\n"
             f"Wind: {wind_speed}m/s / Gust: {wind_gust}m/s {wind_alert}\n"
+            f"Soil: {soil_moisture} (Threshold: {MOISTURE_THRESHOLD})\n"
             f"Watering: {watering_advice}"
         )
         send_telegram(message)
