@@ -60,6 +60,9 @@ int main() {
         return -1; 
     }
 
+    // Initialize the LED status to SKIP (Green) at the start
+    LEDStatus current_status = STATUS_SKIP;
+
     // Initialize Wi-Fi and TCP connection to the HomeServer
     for (int i = 0; i < 5; i++) {
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);  // Turn on the Wi-Fi LED to indicate connection attempt
@@ -67,6 +70,23 @@ int main() {
         cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);  // Turn off the Wi-Fi LED
         sleep_ms(100);
     }
+
+    // Test the LED blinking
+    haniwa_indication_on(STATUS_TOO_MUCH);
+    sleep_ms(200);
+    haniwa_flash_off();
+    sleep_ms(200);
+    haniwa_indication_on(STATUS_SKIP);
+    sleep_ms(200);
+    haniwa_flash_off();
+    sleep_ms(200);
+    haniwa_indication_on(STATUS_GO);
+    sleep_ms(200);
+    haniwa_flash_off();
+    sleep_ms(200);
+    haniwa_flash_on();
+    sleep_ms(500);
+    haniwa_flash_off();
     
     // Test sensor, and send the first moisture value to the HomeServer
     uint16_t val = get_moisture();
@@ -74,8 +94,6 @@ int main() {
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
     last_flash_time = to_ms_since_boot(get_absolute_time());
-    // Initialize the LED status to SKIP (Green) at the start
-    LEDStatus current_status = STATUS_SKIP;
     
     // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
     watchdog_enable(8000, 1);
