@@ -94,6 +94,24 @@ int main() {
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
     last_flash_time = to_ms_since_boot(get_absolute_time());
+
+    // Test the water pump by turning it on for 1 second and then off
+    haniwa_water_on();
+    sleep_ms(1000);
+    haniwa_water_off();
+    sleep_ms(1000);
+    haniwa_water_on();
+    sleep_ms(1000);
+    haniwa_water_off();
+    sleep_ms(1000);
+    haniwa_water_on();
+    sleep_ms(1000);
+    haniwa_water_off();
+    sleep_ms(1000);
+    haniwa_water_on();
+    sleep_ms(1000);
+    haniwa_water_off();
+    sleep_ms(1000);
     
     // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
     watchdog_enable(8000, 1);

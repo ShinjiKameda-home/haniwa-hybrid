@@ -12,6 +12,7 @@ const uint LED_RED     = 13;
 const uint LED_GREEN   = 14;
 const uint LED_BLUE    = 15;
 const uint SENSOR_VCC  = 22;
+const uint PUMP_IN1    = 20;
 
 // GP26 is ADC0, GP27 is ADC1, and GP28 is ADC2, 
 //  depending on your microcontroller board
@@ -174,4 +175,14 @@ void haniwa_flash_off(void) {
     gpio_put(LED_GREEN, 1); // OFF
     gpio_put(LED_BLUE, 1);  // OFF
     turn_off_all_leds();
+}
+
+// Turn on the water pump
+void haniwa_water_on(void) {    
+    gpio_put(PUMP_IN1, 1); // ON
+}
+
+// Turn off the water pump
+void haniwa_water_off(void) {
+    gpio_put(PUMP_IN1, 0); // OFF
 }

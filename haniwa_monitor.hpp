@@ -25,4 +25,8 @@ void haniwa_flash_on(void);
 void haniwa_indication_on(LEDStatus status);
 void haniwa_flash_off(void);
 
+// Turn on/off water pump
+void haniwa_water_on(void);
+void haniwa_water_off(void);
+
 #endif
