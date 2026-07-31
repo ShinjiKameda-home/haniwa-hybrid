@@ -8,7 +8,7 @@
 
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
-const uint32_t FLASH_INTERVAL_MS = 20 * 1000; // Flash LEDs every 20 seconds
+const uint32_t FLASH_INTERVAL_MS = 5 * 1000; // Flash LEDs every 5 seconds
 uint32_t last_report_time = 0;
 uint32_t last_flash_time = 0;
 uint32_t flashing_start_time = 0;
@@ -100,18 +100,6 @@ int main() {
     sleep_ms(1000);
     haniwa_water_off();
     sleep_ms(1000);
-    haniwa_water_on();
-    sleep_ms(1000);
-    haniwa_water_off();
-    sleep_ms(1000);
-    haniwa_water_on();
-    sleep_ms(1000);
-    haniwa_water_off();
-    sleep_ms(1000);
-    haniwa_water_on();
-    sleep_ms(1000);
-    haniwa_water_off();
-    sleep_ms(1000);
     
     // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
     watchdog_enable(8000, 1);
@@ -140,12 +128,14 @@ int main() {
                 flashing_start_time = current_time;
                 flashing_led_state = true;
                 // haniwa_flash_on(); // Flash all LEDs was cancelled instead of indicating the current status
-                haniwa_indication_on(current_status);                
+                haniwa_indication_on(current_status);
+                haniwa_water_on();     // for testing the water pump, but it can be removed if not needed                
             }
         } else {
             if (current_time - flashing_start_time >= 500) {
                 flashing_led_state = false;
                 haniwa_flash_off();
+                haniwa_water_off();     // for testing the water pump, but it can be removed if not needed
             }
         }        
 
