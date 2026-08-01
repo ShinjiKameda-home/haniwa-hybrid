@@ -8,7 +8,7 @@
 
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
-const uint32_t FLASH_INTERVAL_MS = 5 * 1000; // Flash LEDs every 5 seconds
+const uint32_t FLASH_INTERVAL_MS = 12 * 1000; // Flash LEDs every 12 seconds
 uint32_t last_report_time = 0;
 uint32_t last_flash_time = 0;
 uint32_t flashing_start_time = 0;

@@ -23,7 +23,7 @@ RAIN_SLOTS_THRESHOLD = 2  # Threshold for deciding watering based on rain foreca
 SHM_NAME = "memories_of_haniwa_garden"
 SHM_SIZE = 8  # Size in bytes for shared memory (enough for a few flags or small data)
 MOISTURE_FILE = "../soil_moisture.json"
-MOISTURE_THRESHOLD = 400  # Threshold for dry soil
+MOISTURE_THRESHOLD = 300  # Threshold for dry soil
 MOISTURE_LIMIT = 3800     # Threshold for overly wet soil, error
 CURRENT_MOISTURE = 4095   # Placeholder for current soil moisture value
 
