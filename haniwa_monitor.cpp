@@ -12,7 +12,7 @@ const uint LED_RED     = 13;
 const uint LED_GREEN   = 14;
 const uint LED_BLUE    = 15;
 const uint SENSOR_VCC  = 22;
-const uint PUMP_IN1    = 20;
+const uint PUMP_BASE   = 20;
 
 // GP26 is ADC0, GP27 is ADC1, and GP28 is ADC2, 
 //  depending on your microcontroller board
@@ -65,6 +65,11 @@ void haniwa_monitor_init() {
     adc_init();
     adc_gpio_init(SENSOR_AOUT);
     adc_select_input(SENSOR_ADC_NUM);
+
+    // Initialize Water Pump pin
+    gpio_init(PUMP_BASE);
+    gpio_set_dir(PUMP_BASE, GPIO_OUT);
+    gpio_put(PUMP_BASE, 0);
 }
 
 // Start blinking LEDs with the specified colors, interval, and count
@@ -179,10 +184,10 @@ void haniwa_flash_off(void) {
 
 // Turn on the water pump
 void haniwa_water_on(void) {    
-    gpio_put(PUMP_IN1, 1); // ON
+    gpio_put(PUMP_BASE, 1); // ON
 }
 
 // Turn off the water pump
 void haniwa_water_off(void) {
-    gpio_put(PUMP_IN1, 0); // OFF
+    gpio_put(PUMP_BASE, 0); // OFF
 }
