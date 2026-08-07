@@ -146,13 +146,14 @@ int main() {
         if (!pump_state) {
             if (current_time - last_pump_on_time >= FLASH_INTERVAL_MS) {
                 last_pump_on_time = current_time;
+                pump_start_time = current_time;
                 pump_state = true;
-                haniwa_water_on();     // for testing the water pump, but it can be removed if not needed                
+                haniwa_water_on(); 
             }
         } else {
             if (current_time - pump_start_time >= PUMP_ON_DURATION_MS) {
                 pump_state = false;
-                haniwa_water_off();     // for testing the water pump, but it can be removed if not needed
+                haniwa_water_off();
             }
         }        
 
