@@ -9,10 +9,15 @@
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
 const uint32_t FLASH_INTERVAL_MS = 12 * 1000; // Flash LEDs every 12 seconds
+const uint32_t PUMP_ON_DURATION_MS = 3 * 1000; // Water pump on duration 3 seconds
+const uint32_t FLASH_ON_DURATION_MS = 500; // Flash LED on duration 500 ms
 uint32_t last_report_time = 0;
 uint32_t last_flash_time = 0;
+uint32_t last_pump_on_time = 0;
 uint32_t flashing_start_time = 0;
+uint32_t pump_start_time = 0;
 bool flashing_led_state = false;
+bool pump_state = false;
 uint32_t loop_count = 0;
 bool heartbeat_led_state = false;
 
@@ -88,18 +93,18 @@ int main() {
     sleep_ms(500);
     haniwa_flash_off();
     
+    // Test the water pump by turning it on for 1 second and then off
+    haniwa_water_on();
+    sleep_ms(1000);
+    haniwa_water_off();
+
     // Test sensor, and send the first moisture value to the HomeServer
     uint16_t val = get_moisture();
     printf("Current moisture: %u\n", val);
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
     last_flash_time = to_ms_since_boot(get_absolute_time());
-
-    // Test the water pump by turning it on for 1 second and then off
-    haniwa_water_on();
-    sleep_ms(1000);
-    haniwa_water_off();
-    sleep_ms(1000);
+    last_pump_on_time = to_ms_since_boot(get_absolute_time());
     
     // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
     watchdog_enable(8000, 1);
@@ -129,12 +134,24 @@ int main() {
                 flashing_led_state = true;
                 // haniwa_flash_on(); // Flash all LEDs was cancelled instead of indicating the current status
                 haniwa_indication_on(current_status);
+            }
+        } else {
+            if (current_time - flashing_start_time >= FLASH_ON_DURATION_MS) {
+                flashing_led_state = false;
+                haniwa_flash_off();
+            }
+        }        
+
+        // Pump water test
+        if (!pump_state) {
+            if (current_time - last_pump_on_time >= FLASH_INTERVAL_MS) {
+                last_pump_on_time = current_time;
+                pump_state = true;
                 haniwa_water_on();     // for testing the water pump, but it can be removed if not needed                
             }
         } else {
-            if (current_time - flashing_start_time >= 500) {
-                flashing_led_state = false;
-                haniwa_flash_off();
+            if (current_time - pump_start_time >= PUMP_ON_DURATION_MS) {
+                pump_state = false;
                 haniwa_water_off();     // for testing the water pump, but it can be removed if not needed
             }
         }        
