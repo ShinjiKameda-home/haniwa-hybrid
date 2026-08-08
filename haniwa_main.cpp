@@ -8,14 +8,15 @@
 
 // Global Constants
 const uint32_t REPORT_INTERVAL_MS = 15 * 60 * 1000; // Report moisture every 15 minutes
+const uint32_t REPORT_COUNT_MAX = 12; // Maximum report count before watering
 const uint32_t FLASH_INTERVAL_MS = 12 * 1000; // Flash LEDs every 12 seconds
-const uint32_t PUMP_ON_DURATION_MS = 3 * 1000; // Water pump on duration 3 seconds
+const uint32_t PUMP_ON_DURATION_MS = 2 * 60 * 1000; // Water pump on duration 2 minutes
 const uint32_t FLASH_ON_DURATION_MS = 500; // Flash LED on duration 500 ms
 uint32_t last_report_time = 0;
 uint32_t last_flash_time = 0;
-uint32_t last_pump_on_time = 0;
+uint32_t last_pump_time = 0;
+uint32_t report_count = REPORT_COUNT_MAX;
 uint32_t flashing_start_time = 0;
-uint32_t pump_start_time = 0;
 bool flashing_led_state = false;
 bool pump_state = false;
 uint32_t loop_count = 0;
@@ -104,7 +105,7 @@ int main() {
     haniwa_send_data(val);
     last_report_time = to_ms_since_boot(get_absolute_time());
     last_flash_time = to_ms_since_boot(get_absolute_time());
-    last_pump_on_time = to_ms_since_boot(get_absolute_time());
+    last_pump_time = to_ms_since_boot(get_absolute_time());
     
     // Enable the watchdog with an 8-second timeout to recover from potential hangs or bus errors
     watchdog_enable(8000, 1);
@@ -124,7 +125,28 @@ int main() {
         if (haniwa_recv_result(&current_status)) {
             update_led_status(current_status); 
             printf("Haniwa: Updated LED status based on the decision.\n");
+            // Pump water when the decision is GO watering (Red)
+            if (current_status == STATUS_GO && !pump_state) {
+                if (current_time - last_pump_time >= REPORT_INTERVAL_MS) {
+                    last_pump_time = current_time;
+                    report_count++;
+                    if (report_count > REPORT_COUNT_MAX) {
+                        report_count = 0;
+                        pump_state = true;
+                        haniwa_water_on(); 
+                        printf("Haniwa: Watering started.\n");
+                    }
+                }
+            }
         }
+
+        // Turn off the water pump after the specified duration
+        if (pump_state && (current_time - last_pump_time >= PUMP_ON_DURATION_MS)) {
+            pump_state = false;
+            haniwa_water_off();
+            printf("Haniwa: Watering stopped.\n");
+        }
+
 
         // Flash LEDs to indicate keeping alive
         if (!flashing_led_state) {
@@ -139,21 +161,6 @@ int main() {
             if (current_time - flashing_start_time >= FLASH_ON_DURATION_MS) {
                 flashing_led_state = false;
                 haniwa_flash_off();
-            }
-        }        
-
-        // Pump water test
-        if (!pump_state) {
-            if (current_time - last_pump_on_time >= FLASH_INTERVAL_MS) {
-                last_pump_on_time = current_time;
-                pump_start_time = current_time;
-                pump_state = true;
-                haniwa_water_on(); 
-            }
-        } else {
-            if (current_time - pump_start_time >= PUMP_ON_DURATION_MS) {
-                pump_state = false;
-                haniwa_water_off();
             }
         }        
 
